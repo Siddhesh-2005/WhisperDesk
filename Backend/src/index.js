@@ -1,20 +1,27 @@
 import dotenv from "dotenv";
-import connectDB from "./db/index.js";
+import connectDB from "./db/mongo.js";
+import { connectRedis } from "./db/redis.js";
 import { app } from "./app.js";
 
-//the env is loaded first
+// load env FIRST
 dotenv.config({
-    path: "./.env",
+  path: "./.env",
 });
 
+const startServer = async () => {
+  try {
+    // connect databases
+    await connectDB();
+    await connectRedis();
 
-//when the index.js starts it first connects the db 
-connectDB()
-    .then(() => {
-        app.listen(process.env.PORT || 8000, () => {
-            console.log(`Server is running on port ${process.env.PORT}`);
-        });
-    })
-    .catch((err) => {
-        console.log("MONGODB connection FAILED....", err);
+    // start server
+    app.listen(process.env.PORT || 8000, () => {
+      console.log(`Server running on port ${process.env.PORT || 8000}`);
     });
+  } catch (err) {
+    console.error("Server startup failed:", err);
+    process.exit(1);
+  }
+};
+
+startServer();

@@ -18,6 +18,7 @@
     "express": "^5.2.1",
     "mongoose": "^9.0.1",
     "nodemon": "^3.1.11",
-    "prettier": "^3.7.4"
+    "prettier": "^3.7.4",
+    "redis": "^5.10.0"
   }
 }
