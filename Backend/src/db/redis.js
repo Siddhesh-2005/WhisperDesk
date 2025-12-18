@@ -1,4 +1,3 @@
-// src/db/redis.js
 import { createClient } from "redis";
 
 const redisClient = createClient({
