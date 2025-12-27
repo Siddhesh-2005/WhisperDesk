@@ -117,4 +117,11 @@ const login = asyncHandler(async (req, res) => {
         );
 });
 
-export { sendEmail, login };
+const getUser=asyncHandler(async(req,res)=>{
+    res.status(200)
+    .json(new ApiResponse(
+        200,req.user,"User details sent successfully"
+    ))
+})
+
+export { sendEmail, login, getUser };

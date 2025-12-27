@@ -5,21 +5,30 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
+    "worker": "node src/workers/postModeration.worker.js"
   },
   "keywords": [],
   "author": "Siddhesh Bagde",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.2",
+    "bullmq": "^5.66.2",
+    "cloudinary": "^2.8.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "groq-sdk": "^0.37.0",
+    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
+    "multer": "^2.0.2",
     "nodemailer": "^7.0.11",
     "nodemon": "^3.1.11",
+    "openai": "^6.15.0",
     "prettier": "^3.7.4",
     "redis": "^5.10.0"
   }
