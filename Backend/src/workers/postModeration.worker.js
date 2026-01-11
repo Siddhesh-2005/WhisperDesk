@@ -4,7 +4,7 @@ dotenv.config({
 });
 import { Worker } from "bullmq";
 import redis from "../db/redis.local.js";
-import redisClient from "../db/redis.js";
+import redisClient, { connectRedis } from "../db/redis.js";
 import { Post } from "../models/post.model.js";
 import { perspectiveClient } from "../utils/perspective.js";
 import { checkWithGemini } from "../utils/gemini.js";
@@ -15,16 +15,17 @@ import { groqCLient } from "../utils/groq.js";
 import connectDB from "../db/mongo.js";
 
 await connectDB();
+await connectRedis();
 
 const postModerationWorker = new Worker(
     "postModerationQueue",
     async (job) => {
         const { postId, imagePath } = job.data;
-        console.log("processing ", job.id);
+
 
         const post = await Post.findById(postId);
         if (!post) {
-            console.log("post not found");
+
 
             return;
         }
@@ -35,7 +36,7 @@ const postModerationWorker = new Worker(
                 isLocalBlacklisted(post.content) ||
                 isLocalBlacklisted(post.title)
             ) {
-                console.log("entered regex");
+
 
                 return await finalizePost(
                     post,
@@ -53,8 +54,7 @@ const postModerationWorker = new Worker(
             const insult =
                 perspectiveResponse.attributeScores.INSULT.summaryScore.value;
             const maxScore = Math.max(toxicity, insult);
-            console.log(toxicity);
-            console.log(insult);
+
 
             if (maxScore > 0.9) {
                 return await finalizePost(

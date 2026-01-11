@@ -7,5 +7,3 @@ const moderation = await openai.moderations.create({
     model: "omni-moderation-latest",
     input: "",
 });
-
-console.log(moderation);

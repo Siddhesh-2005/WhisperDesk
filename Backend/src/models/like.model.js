@@ -19,3 +19,5 @@ const likeSchema = new mongoose.Schema(
 );
 
 likeSchema.index({ postId: 1, userId: 1 }, { unique: true });
+
+export const Like = mongoose.model("Like", likeSchema);
