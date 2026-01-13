@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: "./.env" });
 
 import connectDB from "../db/mongo.js";
-import redisClient from "../db/redis.js";
+import redisClient from "../db/redis.upstash.js";
 import { Like } from "../models/like.model.js";
 import { Post } from "../models/post.model.js";
 

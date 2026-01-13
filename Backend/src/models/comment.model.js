@@ -31,3 +31,8 @@ const commentSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+commentSchema.index({ postId: 1, createdAt: -1 });
+commentSchema.index({ authorId: 1, createdAt: -1 });
+
+export const Comment = mongoose.model("Comment", commentSchema);

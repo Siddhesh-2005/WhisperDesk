@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import redis from "../db/redis.js";
+import redis from "../db/redis.upstash.js";
 import { ApiError } from "../utils/ApiError.js";
 
 export const createMagicToken = async (userId) => {

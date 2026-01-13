@@ -1,4 +1,4 @@
-import redisClient from "../db/redis.js";
+import redisClient from "../db/redis.upstash.js";
 import { getLuaScript } from "../scripts/loadScripts.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";

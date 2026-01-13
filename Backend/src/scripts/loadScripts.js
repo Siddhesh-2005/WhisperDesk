@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import redisClient from "../db/redis.js";
+import redisClient from "../db/redis.upstash.js";
 
 const scripts = {};
 

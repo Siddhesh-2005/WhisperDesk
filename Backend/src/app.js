@@ -28,8 +28,12 @@ app.use(cookieParser())
 
 import userRouter from "./routes/user.route.js"
 import postRouter from "./routes/post.route.js"
+import commentRouter from "./routes/comment.route.js"
+import reportRouter from "./routes/report.route.js"
 
 app.use("/api/v1/users",userRouter)
 app.use("/api/v1/posts",postRouter)
+app.use("/api/v1/comments",commentRouter)
+app.use("/api/v1/reports",reportRouter)
 
 export {app}

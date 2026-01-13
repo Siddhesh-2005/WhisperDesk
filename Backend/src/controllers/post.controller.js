@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Post } from "../models/post.model.js";
 import {postModerationQueue} from "../queues/postModeration.queue.js"
-import redisClient from "../db/redis.js"
+import redisClient from "../db/redis.upstash.js"
 
 // const createPost = asyncHandler(async (req, res) => {
 //     const { title, content } = req.body;

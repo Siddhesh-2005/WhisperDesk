@@ -2,8 +2,8 @@ import dotenv from "dotenv";
 dotenv.config({ path: "./.env" });
 
 import { Worker } from "bullmq";
-import redis from "../db/redis.local.js";
-import redisClient from "../db/redis.js";
+import { getRedisCloudClient } from "../db/redis.cloud.js";
+import redisUpstash from "../db/redis.upstash.js";
 import connectDB from "../db/mongo.js";
 import { Like } from "../models/like.model.js";
 import { Post } from "../models/post.model.js";
@@ -13,16 +13,16 @@ await connectDB();
 // Connect to Upstash Redis
 
 
-if (!redisClient.isOpen) {
+if (!redisUpstash.isOpen) {
   try {
-    await redisClient.connect();
+    await redisUpstash.connect();
 
     
     // Test the connection with a unique key
     const testKey = "test:worker:connection:" + Date.now();
-    await redisClient.set(testKey, "works");
-    const testValue = await redisClient.get(testKey);
-    await redisClient.del(testKey);
+    await redisUpstash.set(testKey, "works");
+    const testValue = await redisUpstash.get(testKey);
+    await redisUpstash.del(testKey);
 
     
 
@@ -37,14 +37,14 @@ const likeReconciliationWorker = new Worker(
   "likeReconciliationQueue",
   async () => {
     // Find all initialized posts
-    const initKeys = await redisClient.keys("post:likes:init:*");
+    const initKeys = await redisUpstash.keys("post:likes:init:*");
 
     for (const initKey of initKeys) {
       const postId = initKey.split(":").pop();
       const postLikesKey = `post:likes:${postId}`;
 
       // Redis is the source of truth
-      const userIds = await redisClient.sMembers(postLikesKey);
+      const userIds = await redisUpstash.sMembers(postLikesKey);
 
       // 3️ Rebuild Like collection (idempotent)
       await Like.deleteMany({ postId });
@@ -68,7 +68,7 @@ const likeReconciliationWorker = new Worker(
 
   },
   {
-    connection: redis,
+    connection: getRedisCloudClient(),
     concurrency: 1, // VERY IMPORTANT
   }
 );

@@ -3,8 +3,8 @@ dotenv.config({
     path: "./.env",
 });
 import { Worker } from "bullmq";
-import redis from "../db/redis.local.js";
-import redisClient, { connectRedis } from "../db/redis.js";
+import { getRedisCloudClient } from "../db/redis.cloud.js";
+import redisUpstash, { connectRedis } from "../db/redis.upstash.js";
 import { Post } from "../models/post.model.js";
 import { perspectiveClient } from "../utils/perspective.js";
 import { checkWithGemini } from "../utils/gemini.js";
@@ -105,7 +105,7 @@ const postModerationWorker = new Worker(
             throw error;
         }
     },
-    { connection: redis, concurrency: 5 }
+    { connection: getRedisCloudClient(), concurrency: 5 }
 );
 
 // Helper function
@@ -126,7 +126,7 @@ async function finalizePost(post, status, path, reason, extras = {}) {
 
     if (status === "PUBLISHED") post.publishedAt = new Date();
 
-    await redisClient.set(
+    await redisUpstash.set(
             `post:likes:init:${post._id}`,
             "1",
             { NX: true } // idempotent, safe on retries

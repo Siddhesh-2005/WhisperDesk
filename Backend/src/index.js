@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import connectDB from "./db/mongo.js";
-import { connectRedis } from "./db/redis.js";
+import { connectRedis } from "./db/redis.upstash.js";
+import { connectRedisCloud } from "./db/redis.cloud.js";
 import { loadLuaScripts } from "./scripts/loadScripts.js";
 import { app } from "./app.js";
 import { likeReconciliationQueue } from "./queues/likeReconciliation.queue.js";
@@ -16,6 +17,7 @@ const startServer = async () => {
         // connect databases
         await connectDB();
         await connectRedis();
+        await connectRedisCloud();
         await loadLuaScripts();
 
         const job = await likeReconciliationQueue.add(

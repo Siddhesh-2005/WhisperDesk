@@ -6,7 +6,7 @@ import { validateCollegeEmail } from "../services/validateEmail.service.js";
 import { User } from "../models/user.model.js";
 import { generateUniqueUsername } from "../services/generateUsername.service.js";
 import { createMagicToken } from "../services/magicToken.service.js";
-import redis from "../db/redis.js";
+import redis from "../db/redis.upstash.js";
 import { options } from "../constants.js";
 import crypto from "crypto"
 
