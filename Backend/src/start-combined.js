@@ -6,6 +6,11 @@ import { loadLuaScripts } from "./scripts/loadScripts.js";
 import { app } from "./app.js";
 import { likeReconciliationQueue } from "./queues/likeReconciliation.queue.js";
 
+// Start workers in the same process
+import "./workers/postModeration.worker.js";
+import "./workers/likeReconciliation.worker.js";
+import "./workers/redisRebuild.worker.js";
+
 // load env FIRST (optional for Render, which injects env directly)
 if (process.env.NODE_ENV !== "production") {
     dotenv.config({
@@ -26,7 +31,7 @@ const startServer = async () => {
             {},
             {
                 repeat: {
-                    every:60 * 1000, // every 60 seconds
+                    every: 60 * 1000, // every 60 seconds
                 },
                 removeOnComplete: true,
                 removeOnFail: true,
@@ -36,7 +41,8 @@ const startServer = async () => {
 
         // start server
         app.listen(process.env.PORT || 8000, () => {
-            console.log(`Server running on port ${process.env.PORT || 8000}`);
+            console.log(`🚀 Server running on port ${process.env.PORT || 8000}`);
+            console.log(`🔄 Workers running in same instance`);
         });
     } catch (err) {
         console.error("Server startup failed:", err);
