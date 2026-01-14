@@ -124,4 +124,12 @@ const getUser=asyncHandler(async(req,res)=>{
     ))
 })
 
-export { sendEmail, login, getUser };
+const logout = asyncHandler(async (req, res) => {
+    // Clear access token cookie; use same options for consistency
+    res
+        .status(200)
+        .clearCookie("accessToken", { ...options, expires: new Date(0) })
+        .json(new ApiResponse(200, "Logout successful"));
+});
+
+export { sendEmail, login, getUser, logout };

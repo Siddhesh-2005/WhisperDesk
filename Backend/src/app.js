@@ -4,11 +4,21 @@ import cookieParser from "cookie-parser"
 
 const app=express()
 
+// behind Render's proxy in production (enables secure cookies, correct protocol)
+if (process.env.NODE_ENV === "production") {
+    app.set("trust proxy", 1)
+}
+
 //middlewares
 
+// Allow comma-separated origins via CORS_ORIGIN (e.g. https://app.com,https://admin.app.com)
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
+    : []
+
 app.use(cors({
-    origin:process.env.CORS_ORIGIN,
-    credentials:true
+    origin: allowedOrigins.length ? allowedOrigins : process.env.CORS_ORIGIN,
+    credentials: true
 }))
 
 app.use(express.json({
@@ -35,5 +45,10 @@ app.use("/api/v1/users",userRouter)
 app.use("/api/v1/posts",postRouter)
 app.use("/api/v1/comments",commentRouter)
 app.use("/api/v1/reports",reportRouter)
+
+// Health check for Render
+app.get("/healthz", (req, res) => {
+    res.status(200).send("ok")
+})
 
 export {app}
