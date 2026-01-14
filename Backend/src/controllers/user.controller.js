@@ -44,10 +44,10 @@ const sendEmail = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Unable to generate magic token");
     }
 
-    const url =
-        "http://localhost:8000/api/v1/users/login?magictoken=" + rawToken;
+    const baseUrl = process.env.FRONTEND_URL || process.env.BASE_URL || "http://localhost:8000";
+    const url = `${baseUrl}/api/v1/users/login?magictoken=${rawToken}`;
 
-    send(incomingEmail, url);
+    await send(incomingEmail, url);
 
     return res
         .status(200)
