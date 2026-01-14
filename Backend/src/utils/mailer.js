@@ -7,13 +7,31 @@ if (!process.env.BREVO_SMTP_KEY) {
 
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false, // true for 465, false for other ports
+  port: 465, // Use 465 for SSL (more reliable on cloud platforms)
+  secure: true, // true for port 465
   auth: {
     user: process.env.BREVO_SMTP_USER || "9e331c001@smtp-brevo.com",
     pass: process.env.BREVO_SMTP_KEY,
   },
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000, // 10 seconds
+  socketTimeout: 10000, // 10 seconds
+  logger: process.env.NODE_ENV === 'production' ? false : true,
+  debug: process.env.NODE_ENV !== 'production',
 });
+
+// Verify transporter on startup (optional)
+if (process.env.BREVO_SMTP_KEY) {
+  transporter.verify((error, success) => {
+    if (error) {
+      console.error("❌ SMTP Configuration Error:", error.message);
+      console.log("💡 If you see connection timeout, Render might be blocking port 465.");
+      console.log("💡 Consider using a service like SendGrid, Mailgun, or Resend instead.");
+    } else {
+      console.log("✅ SMTP server is ready to send emails");
+    }
+  });
+}
 
 export const sendEmail = async (email, url) => {
   try {
