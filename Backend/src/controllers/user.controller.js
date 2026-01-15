@@ -44,8 +44,8 @@ const sendEmail = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Unable to generate magic token");
     }
 
-    const baseUrl = process.env.FRONTEND_URL || process.env.BASE_URL || "http://localhost:8000";
-    const url = `${baseUrl}/api/v1/users/login?magictoken=${rawToken}`;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const url = `${frontendUrl}/auth/callback?token=${rawToken}`;
 
     await send(incomingEmail, url);
 
@@ -96,25 +96,25 @@ const login = asyncHandler(async (req, res) => {
 
     const accessToken = user.generateAccessToken();
 
-    const frontendURL = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
 
+    // Check if request is from the frontend (via proxy/fetch) or direct browser navigation
+    const acceptHeader = req.get('Accept') || '';
+    const isAPIRequest = acceptHeader.includes('application/json');
+
+    if (isAPIRequest) {
+        // API request - return JSON (frontend will handle redirect)
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .json(new ApiResponse(200, { user: { id: user._id, email: user.email, username: user.username } }, "Login successful"));
+    }
+
+    // Direct browser navigation - redirect to frontend
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
-        //.redirect(`${frontendURL}/dashboard?login=success`)
-        .json(
-            new ApiResponse(
-                200,
-                {
-                    user: {
-                        id: user._id,
-                        email: user.email,
-                        username: user.username,
-                    },
-                },
-                "Login successful"
-            )
-        );
+        .redirect(`${frontendURL}/home`);
 });
 
 const getUser=asyncHandler(async(req,res)=>{
