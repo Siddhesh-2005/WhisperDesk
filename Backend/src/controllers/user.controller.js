@@ -101,11 +101,13 @@ const login = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
     }
 
+    // Mark token as used (don't delete - let Redis TTL handle cleanup)
+    // This prevents race conditions with duplicate requests
     await redis.hSet(key, {
         usedAt: new Date().toISOString(),
     });
 
-    await redis.del(key);
+    console.log("✅ Token marked as used, login successful for user:", user.email);
 
     const accessToken = user.generateAccessToken();
 
