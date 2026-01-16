@@ -47,7 +47,7 @@ function CreatePostForm({ onSubmit, isLoading, onCancel }) {
         {/* Title */}
         <div>
           <label className="block font-bold text-sm uppercase mb-2">
-            Title (Optional)
+            Title (Required) 
           </label>
           <input
             type="text"

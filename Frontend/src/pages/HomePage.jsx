@@ -166,11 +166,21 @@ function HomePage() {
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         {showCreateForm && (
-          <CreatePostForm
-            onSubmit={handleCreatePost}
-            isLoading={isLoadingCreate}
-            onCancel={() => setShowCreateForm(false)}
-          />
+          <div
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 backdrop-blur-sm px-4 py-10"
+            onClick={() => setShowCreateForm(false)}
+          >
+            <div
+              className="w-full max-w-3xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CreatePostForm
+                onSubmit={handleCreatePost}
+                isLoading={isLoadingCreate}
+                onCancel={() => setShowCreateForm(false)}
+              />
+            </div>
+          </div>
         )}
 
         {isLoadingPosts ? (

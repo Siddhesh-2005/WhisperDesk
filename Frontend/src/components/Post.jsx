@@ -1,14 +1,6 @@
 import { useState } from 'react';
 import CommentsDropdown from './CommentsDropdown';
 
-const generateRandomUsername = () => {
-  const adjectives = ['Silent', 'Quiet', 'Dark', 'Bold', 'Swift', 'Keen', 'Wise', 'Curious'];
-  const nouns = ['Writer', 'Thinker', 'Voice', 'Mind', 'Echo', 'Shadow', 'Light', 'Soul'];
-  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const noun = nouns[Math.floor(Math.random() * nouns.length)];
-  return `${adj}${noun}${Math.floor(Math.random() * 999)}`;
-};
-
 const formatTimeAgo = (date) => {
   const now = new Date();
   const postDate = new Date(date);
@@ -37,7 +29,9 @@ function Post({
   isLoadingLike,
 }) {
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const [randomUsername] = useState(() => generateRandomUsername());
+
+  const displayUsername =
+    post?.authorId?.username || post?.author?.username || 'Anonymous';
 
   const handleCommentClick = () => {
     setIsCommentsOpen(!isCommentsOpen);
@@ -48,11 +42,13 @@ function Post({
       {/* Header */}
       <div className="flex justify-between items-start mb-4 pb-4 border-b-3 border-black">
         <div>
-          <p className="font-black uppercase text-sm text-gray-700">{randomUsername}</p>
-          <p className="text-xs text-gray-500">{formatTimeAgo(post.createdAt)}</p>
+          <p className="font-black uppercase text-sm text-gray-700">{displayUsername}</p>
+          {post.category && (
+            <p className="text-xs text-gray-600 uppercase font-semibold">{post.category}</p>
+          )}
         </div>
         <div className="text-right text-xs text-gray-500">
-          ID: {post._id?.slice(0, 8)}...
+          {formatTimeAgo(post.createdAt)}
         </div>
       </div>
 
@@ -78,6 +74,20 @@ function Post({
       <p className="text-base leading-relaxed mb-6 text-gray-800">
         {post.content}
       </p>
+
+      {/* Tags */}
+      {post.tags && post.tags.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {post.tags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-block px-3 py-1 bg-gray-200 border-2 border-black text-xs font-bold uppercase rounded-full"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Footer - Actions */}
       <div className="flex items-center gap-4 pt-4 border-t-3 border-black">
@@ -117,7 +127,7 @@ function Post({
           className="flex items-center gap-2 px-4 py-2 border-3 border-black font-bold text-sm uppercase rounded-lg bg-yellow-300 shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] transition-all"
         >
           <span>🚩</span>
-          <span>Report</span>
+          
         </button>
       </div>
     </div>

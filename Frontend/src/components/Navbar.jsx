@@ -33,7 +33,7 @@ function Navbar({ onCreateClick }) {
           <div className="flex items-center gap-3 pl-4 border-l-4 border-black">
             <div className="text-right">
               <p className="font-bold text-sm">{user?.username || 'Anon'}</p>
-              <p className="text-xs text-gray-600">{user?.email || 'guest'}</p>
+              {/* <p className="text-xs text-gray-600">{user?.email || 'guest'}</p> */}
             </div>
             <button
               onClick={handleLogout}
