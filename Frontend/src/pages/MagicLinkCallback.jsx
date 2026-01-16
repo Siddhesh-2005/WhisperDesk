@@ -1,29 +1,37 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../store/slices/authSlice';
 import axiosInstance from '../config/axios.config';
+
+// Module-level flag to prevent duplicate requests across re-mounts
+let isProcessingToken = false;
 
 function MagicLinkCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [error, setError] = useState(null);
-  const hasRun = useRef(false); // Prevent duplicate requests
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Prevent duplicate requests (React StrictMode / re-renders)
-    if (hasRun.current) return;
-    hasRun.current = true;
+    const token = searchParams.get('token');
+
+    if (!token) {
+      setError('No magic token provided');
+      setIsLoading(false);
+      return;
+    }
+
+    // Prevent duplicate requests
+    if (isProcessingToken) {
+      console.log('Already processing token, skipping...');
+      return;
+    }
+
+    isProcessingToken = true;
 
     const handleMagicLink = async () => {
-      const token = searchParams.get('token');
-
-      if (!token) {
-        setError('No magic token provided');
-        return;
-      }
-
       try {
         const response = await axiosInstance.get(`/users/login?magictoken=${token}`);
         
@@ -31,18 +39,40 @@ function MagicLinkCallback() {
           // Store user in localStorage and Redux
           localStorage.setItem('user', JSON.stringify(response.data.data.user));
           dispatch(setUser(response.data.data.user));
+          // Reset flag before navigation
+          isProcessingToken = false;
           navigate('/home', { replace: true });
         } else {
           setError('Login failed - no user data');
+          setIsLoading(false);
+          isProcessingToken = false;
         }
       } catch (err) {
         console.error('Magic link error:', err);
+        // Only show error if we're still on this page (not navigated away)
         setError(err.response?.data?.message || 'Invalid or expired magic link');
+        setIsLoading(false);
+        isProcessingToken = false;
       }
     };
 
     handleMagicLink();
+
+    // Cleanup on unmount
+    return () => {
+      // Don't reset if navigating to home (successful login)
+    };
   }, [searchParams, navigate, dispatch]);
+
+  if (isLoading && !error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f4f4f4]">
+        <div className="text-center">
+          <p className="font-black text-2xl uppercase">Logging you in...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -61,13 +91,7 @@ function MagicLinkCallback() {
     );
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f4f4f4]">
-      <div className="text-center">
-        <p className="font-black text-2xl uppercase">Logging you in...</p>
-      </div>
-    </div>
-  );
+  return null;
 }
 
 export default MagicLinkCallback;
