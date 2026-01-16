@@ -45,15 +45,15 @@ function LandingPage() {
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
         <header className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-[var(--ink)] text-[var(--sand)] border-4 border-black rounded-xl grid place-items-center shadow-[8px_8px_0_#0f172a] font-bold">B</div>
+            <div className="h-12 w-12 bg-[var(--ink)] text-[var(--sand)] border-4 border-black rounded-xl grid place-items-center shadow-[8px_8px_0_#0f172a] font-bold">C</div>
             <div>
-              <p className="text-sm font-semibold tracking-[0.12em] uppercase">Retro Blog Studio</p>
-              <p className="text-base font-medium text-[var(--ink)]/70">Neo-brutal diary for thinkers</p>
+              <p className="text-sm font-semibold tracking-[0.12em] uppercase">Campus Confessions</p>
+              <p className="text-base font-medium text-[var(--ink)]/70">Anonymous blogging for college students</p>
             </div>
           </div>
           <div className="hidden sm:flex items-center gap-3">
-            <span className="px-4 py-2 border-[3px] border-black rounded-lg bg-[var(--accent-2)] shadow-[6px_6px_0_#0f172a] text-sm font-semibold">Zero passwords</span>
-            <span className="px-4 py-2 border-[3px] border-black rounded-lg bg-white shadow-[6px_6px_0_#0f172a] text-sm font-semibold">Magic links only</span>
+            <span className="px-4 py-2 border-[3px] border-black rounded-lg bg-[var(--accent-2)] shadow-[6px_6px_0_#0f172a] text-sm font-semibold">100% Anonymous</span>
+            <span className="px-4 py-2 border-[3px] border-black rounded-lg bg-white shadow-[6px_6px_0_#0f172a] text-sm font-semibold">College emails only</span>
           </div>
         </header>
 
@@ -61,29 +61,29 @@ function LandingPage() {
           <div className="space-y-6">
             <div className="inline-flex items-center gap-3 px-4 py-2 bg-[var(--accent)] border-4 border-black rounded-full shadow-[6px_6px_0_#0f172a] text-sm font-semibold">
               <span className="inline-flex h-3 w-3 rounded-full bg-black" />
-              No logins. Just a magic link.
+              Your identity stays hidden. Always.
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-tight">
-              Build and share bold stories with a neo-brutal look.
+              Speak your mind freely. Stay completely anonymous.
             </h1>
 
             <p className="text-lg leading-relaxed max-w-2xl text-[var(--ink)]/80">
-              Drop your email, get a magic link, and start drafting posts with chunky borders, loud colors, and a retro-inspired vibe. No passwords, no friction.
+              A safe space for college students to share thoughts, confessions, and stories without revealing their identity. Use your college email to verify you're a student — your posts remain anonymous.
             </p>
 
             <div className="grid sm:grid-cols-3 gap-4">
               {[{
-                title: 'Write fast',
-                detail: 'Minimal UI, loud focus blocks, zero clutter.',
+                title: 'Stay Anonymous',
+                detail: 'Your identity is never revealed. Post freely without fear.',
                 color: 'bg-white'
               }, {
-                title: 'Add visuals',
-                detail: 'Attach images with tactile drop-shadows.',
+                title: 'Students Only',
+                detail: 'Verified college emails keep the community authentic.',
                 color: 'bg-[var(--accent-2)]'
               }, {
-                title: 'Go live',
-                detail: 'Share instantly with a magic link workflow.',
+                title: 'Share Freely',
+                detail: 'Confessions, stories, advice — express yourself openly.',
                 color: 'bg-[var(--accent)]'
               }].map((item) => (
                 <div
@@ -105,20 +105,20 @@ function LandingPage() {
               <div className="flex items-center gap-3">
                 <span className="h-10 w-10 rounded-2xl bg-[var(--ink)] text-[var(--sand)] grid place-items-center border-4 border-black shadow-[6px_6px_0_#0f172a] font-bold">@</span>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.14em] font-semibold text-[var(--ink)]/70">Get the link</p>
-                  <p className="text-lg font-semibold">Send a magic link to your inbox</p>
+                  <p className="text-xs uppercase tracking-[0.14em] font-semibold text-[var(--ink)]/70">Get Started</p>
+                  <p className="text-lg font-semibold">Enter your college email</p>
                 </div>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <label className="flex flex-col gap-2 text-sm font-semibold">
-                  Email address
+                  College Email
                   <input
                     type="email"
                     name="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    placeholder="you@example.com"
+                    placeholder="you@college.edu"
                     className="w-full rounded-xl border-4 border-black px-4 py-3 bg-[var(--sand)] text-base font-medium shadow-[8px_8px_0_#0f172a] focus:outline-none focus:ring-4 focus:ring-[var(--accent-2)]"
                   />
                 </label>
@@ -142,8 +142,8 @@ function LandingPage() {
               ) : null}
 
               <div className="flex items-center gap-3 text-sm font-medium text-[var(--ink)]/70">
-                <span className="inline-flex h-8 w-8 rounded-full border-[3px] border-black bg-white shadow-[4px_4px_0_#0f172a] items-center justify-center font-black">*</span>
-                No accounts. The link logs you in so you can start writing right away.
+                <span className="inline-flex h-8 w-8 rounded-full border-[3px] border-black bg-white shadow-[4px_4px_0_#0f172a] items-center justify-center font-black">🔒</span>
+                Your email verifies you're a student. Your posts stay anonymous.
               </div>
             </div>
           </div>
