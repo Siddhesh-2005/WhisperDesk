@@ -79,7 +79,7 @@ const login = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Token not found - it may have expired or been used");
     }
 
-    if (tokenData.usedAt) {
+    if (tokenData.usedAt && tokenData.usedAt !== "") {
         console.log("❌ Token already used at:", tokenData.usedAt);
         throw new ApiError(401, "Magic token already used");
     }

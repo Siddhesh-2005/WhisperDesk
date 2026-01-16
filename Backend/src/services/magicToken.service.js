@@ -15,10 +15,9 @@ export const createMagicToken = async (userId) => {
   console.log("🔐 Creating magic token with key:", key);
 
   const tokenData = {
-    userId,
+    userId: userId.toString(),
     createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-    usedAt: ""
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString()
   };
 
   console.log("📝 Token data to store:", JSON.stringify(tokenData));
