@@ -68,17 +68,30 @@ const login = asyncHandler(async (req, res) => {
 
     const key = `magic_token:${tokenHash}`;
 
+    console.log("🔍 Looking up token with key:", key);
+
     const tokenData = await redis.hGetAll(key);
 
+    console.log("📦 Token data from Redis:", JSON.stringify(tokenData));
+
     if (!tokenData || Object.keys(tokenData).length === 0) {
-        throw new ApiError(401, "Invalid or expired magic token");
+        console.log("❌ Token not found in Redis");
+        throw new ApiError(401, "Token not found - it may have expired or been used");
     }
 
     if (tokenData.usedAt) {
+        console.log("❌ Token already used at:", tokenData.usedAt);
         throw new ApiError(401, "Magic token already used");
     }
 
-    if (new Date(tokenData.expiresAt) < new Date()) {
+    const now = new Date();
+    const expiresAt = new Date(tokenData.expiresAt);
+    console.log("⏰ Current time:", now.toISOString());
+    console.log("⏰ Token expires at:", tokenData.expiresAt);
+    console.log("⏰ Time diff (ms):", expiresAt.getTime() - now.getTime());
+
+    if (expiresAt < now) {
+        console.log("❌ Token expired");
         throw new ApiError(401, "Magic token expired");
     }
 
