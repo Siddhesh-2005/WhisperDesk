@@ -33,7 +33,9 @@ function MagicLinkCallback() {
 
     const handleMagicLink = async () => {
       try {
-        const response = await axiosInstance.get(`/users/login?magictoken=${token}`);
+        const response = await axiosInstance.get('/users/login', {
+          params: { magictoken: token }
+        });
         
         if (response.data?.data?.user) {
           // Store user in localStorage and Redux
