@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../store/slices/authSlice';
@@ -9,8 +9,13 @@ function MagicLinkCallback() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [error, setError] = useState(null);
+  const hasRun = useRef(false); // Prevent duplicate requests
 
   useEffect(() => {
+    // Prevent duplicate requests (React StrictMode / re-renders)
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     const handleMagicLink = async () => {
       const token = searchParams.get('token');
 
