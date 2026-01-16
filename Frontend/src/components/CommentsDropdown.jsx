@@ -57,10 +57,10 @@ function CommentsDropdown({ postId, isOpen, onClose, comments = [], onAddComment
               No comments yet. Be the first!
             </div>
           ) : (
-            comments.map((comment) => (
+            comments.filter(comment => comment && comment._id).map((comment) => (
               <div key={comment._id} className="p-3">
                 <p className="font-bold text-xs uppercase mb-1">
-                  {comment.author?.username || 'Anon'}
+                  {comment.author?.username || comment.authorId?.username || 'Anon'}
                 </p>
                 <p className="text-sm leading-relaxed">{comment.content}</p>
                 <p className="text-xs text-gray-500 mt-2">

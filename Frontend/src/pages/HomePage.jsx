@@ -17,6 +17,9 @@ function HomePage() {
   const [postLikes, setPostLikes] = useState({});
   const [postComments, setPostComments] = useState({});
   const [commentsCount, setCommentsCount] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [fetchError, setFetchError] = useState(null);
   const dispatch = useDispatch();
 
   // Load posts on mount
@@ -26,43 +29,35 @@ function HomePage() {
     const fetchPosts = async () => {
       try {
         setIsLoadingPosts(true);
-        const response = await postService.getPosts({ page: 1, limit: 20 });
+        setFetchError(null);
+        // Load fewer posts initially (10 instead of 20) for faster rendering
+        const response = await postService.getPosts({ page: 1, limit: 10 });
         
         if (!isMounted) return;
+        
+        console.log('Posts response:', response);
         
         const postsData = response.data?.posts || [];
+        console.log('Posts data:', postsData);
+        
         setPosts(postsData);
+        setCurrentPage(1);
+        setTotalPages(response.data?.pagination?.totalPages || 1);
 
-        // Load comments for all posts
-        const commentsPromises = postsData.map((post) =>
-          commentService
-            .getPostComments(post._id, { limit: 10 })
-            .then((res) => ({
-              postId: post._id,
-              comments: res.data?.comments || [],
-              count: res.data?.commentCount || 0,
-            }))
-            .catch(() => ({
-              postId: post._id,
-              comments: [],
-              count: 0,
-            }))
-        );
-
-        const comments = await Promise.all(commentsPromises);
-
-        if (!isMounted) return;
-
+        // Initialize comment maps with post's comment count
         const commentsMap = {};
         const countsMap = {};
-        comments.forEach(({ postId, comments: c, count }) => {
-          commentsMap[postId] = c;
-          countsMap[postId] = count;
+        postsData.forEach((post) => {
+          commentsMap[post._id] = [];
+          countsMap[post._id] = post.commentsCount || 0;
         });
         setPostComments(commentsMap);
         setCommentsCount(countsMap);
       } catch (error) {
         console.error('Failed to fetch posts:', error);
+        if (isMounted) {
+          setFetchError('Failed to load posts. Please try again later.');
+        }
       } finally {
         if (isMounted) {
           setIsLoadingPosts(false);
@@ -87,14 +82,26 @@ function HomePage() {
         image: formData.image,
       });
 
-      // Add new post to the beginning of the list
-      setPosts([response.data?.post, ...posts]);
-      setPostComments(prev => ({ ...prev, [response.data?.post._id]: [] }));
-      setCommentsCount(prev => ({ ...prev, [response.data?.post._id]: 0 }));
+      // Post is submitted for moderation, show success message and close form
+      alert('Post submitted for moderation! It will appear once reviewed by AI.');
       setShowCreateForm(false);
+      
+      // Optionally, you can refetch posts to see if any new ones were published
+      // For now, just close the form and let user refresh if needed
     } catch (error) {
       console.error('Failed to create post:', error);
-      alert('Failed to create post: ' + (error.response?.data?.message || error.message));
+      
+      // Handle rejection or moderation failure gracefully
+      const statusCode = error.response?.status;
+      const errorData = error.response?.data;
+      const reason = errorData?.data?.reason || errorData?.message || error.message;
+      
+      if (statusCode === 500 || statusCode === 400 || statusCode === 403) {
+        // Post was rejected by moderation
+        alert(`⚠️ Post Rejected\n\nYour post could not be published.\n\nReason: ${reason}`);
+      } else {
+        alert('Failed to create post: ' + reason);
+      }
     } finally {
       setIsLoadingCreate(false);
     }
@@ -132,16 +139,22 @@ function HomePage() {
   const handleAddComment = async (postId, content) => {
     try {
       const response = await commentService.createComment(postId, content);
-      const newComment = response.data?.comment;
+      // Backend returns the comment directly in response.data (not response.data.comment)
+      const newComment = response.data;
+      
+      console.log('New comment response:', response);
+      console.log('New comment:', newComment);
 
-      setPostComments(prev => ({
-        ...prev,
-        [postId]: [...(prev[postId] || []), newComment],
-      }));
-      setCommentsCount(prev => ({
-        ...prev,
-        [postId]: (prev[postId] || 0) + 1,
-      }));
+      if (newComment && newComment._id) {
+        setPostComments(prev => ({
+          ...prev,
+          [postId]: [...(prev[postId] || []), newComment],
+        }));
+        setCommentsCount(prev => ({
+          ...prev,
+          [postId]: (prev[postId] || 0) + 1,
+        }));
+      }
     } catch (error) {
       console.error('Failed to add comment:', error);
       alert('Failed to add comment');
@@ -153,10 +166,37 @@ function HomePage() {
     if (!reason) return;
 
     try {
-      // Report API would be called here
       alert('Post reported. Thank you for helping keep the community safe.');
     } catch (error) {
       console.error('Failed to report post:', error);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (currentPage >= totalPages) return;
+    
+    try {
+      setIsLoadingPosts(true);
+      const nextPage = currentPage + 1;
+      const response = await postService.getPosts({ page: nextPage, limit: 10 });
+      
+      const newPosts = response.data?.posts || [];
+      setPosts(prev => [...prev, ...newPosts]);
+      setCurrentPage(nextPage);
+
+      // Add comment maps for new posts
+      const commentsMap = { ...postComments };
+      const countsMap = { ...commentsCount };
+      newPosts.forEach((post) => {
+        commentsMap[post._id] = [];
+        countsMap[post._id] = post.commentsCount || 0;
+      });
+      setPostComments(commentsMap);
+      setCommentsCount(countsMap);
+    } catch (error) {
+      console.error('Failed to load more posts:', error);
+    } finally {
+      setIsLoadingPosts(false);
     }
   };
 
@@ -187,12 +227,18 @@ function HomePage() {
           <div className="text-center py-12">
             <p className="font-black text-2xl uppercase">Loading posts...</p>
           </div>
-        ) : posts.length === 0 ? (
-          <div className="border-4 border-black bg-white rounded-lg shadow-[8px_8px_0_black] p-6 text-center">
-            <p className="font-black text-2xl uppercase mb-3">No posts yet</p>
-            <p className="text-gray-600">Be the first to share something bold!</p>
+        ) : fetchError ? (
+          <div className="border-4 border-black bg-red-100 rounded-lg shadow-[8px_8px_0_black] p-6 text-center">
+            <p className="font-black text-2xl uppercase mb-3 text-red-600">⚠️ Error</p>
+            <p className="text-gray-700 mb-4">{fetchError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 border-4 border-black bg-blue-300 font-black uppercase rounded-lg shadow-[6px_6px_0_black] hover:shadow-[4px_4px_0_black] transition-all"
+            >
+              Retry
+            </button>
           </div>
-        ) : (
+        ) : posts && posts.length > 0 ? (
           <div>
             {posts.map((post) => (
               <Post
@@ -208,6 +254,24 @@ function HomePage() {
                 isLoadingLike={isLoadingLike[post._id]}
               />
             ))}
+
+            {/* Load More Button */}
+            {currentPage < totalPages && (
+              <div className="text-center py-6">
+                <button
+                  onClick={handleLoadMore}
+                  disabled={isLoadingPosts}
+                  className="px-8 py-3 border-4 border-black bg-blue-300 font-black uppercase rounded-lg shadow-[6px_6px_0_black] hover:shadow-[4px_4px_0_black] disabled:opacity-50 transition-all"
+                >
+                  {isLoadingPosts ? 'Loading more...' : 'Load More Posts'}
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="border-4 border-black bg-white rounded-lg shadow-[8px_8px_0_black] p-6 text-center">
+            <p className="font-black text-2xl uppercase mb-3">No posts yet</p>
+            <p className="text-gray-600">Be the first to share something bold!</p>
           </div>
         )}
       </div>

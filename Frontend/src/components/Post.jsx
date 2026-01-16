@@ -60,10 +60,10 @@ function Post({
       )}
 
       {/* Image */}
-      {post.image && (
+      {post.image?.url && (
         <div className="mb-4 border-4 border-black rounded-lg overflow-hidden shadow-[6px_6px_0_black]">
           <img
-            src={post.image}
+            src={post.image.url}
             alt={post.title || 'Post image'}
             className="w-full h-64 object-cover"
           />
