@@ -5,6 +5,19 @@ The platform is designed with a strong focus on **privacy, moderation, and scala
 
 ---
 
+## 📚 Project Resources
+
+- **Backend API**  
+[Backend link](https://whisperdesk.onrender.com)
+
+- **System Design & Planning (Eraser.io)**  
+  [Planning](https://app.eraser.io/workspace/1uos0MOvl986dGiSH4Tm)
+  
+- **Frontend url**
+  [Whisper Desk](https://whisper-desk.vercel.app/)
+  
+---
+
 ## 1. Problem Statement
 
 Many students hesitate to express opinions or share experiences online due to:
