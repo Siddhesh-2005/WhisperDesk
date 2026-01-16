@@ -49,8 +49,18 @@ function MagicLinkCallback() {
         }
       } catch (err) {
         console.error('Magic link error:', err);
-        // Only show error if we're still on this page (not navigated away)
-        setError(err.response?.data?.message || 'Invalid or expired magic link');
+        const errorMessage = err.response?.data?.message || 'Invalid or expired magic link';
+        
+        // If token was already used, it means first request succeeded - redirect to home
+        if (errorMessage.includes('already used')) {
+          console.log('Token already used (first request likely succeeded), redirecting...');
+          isProcessingToken = false;
+          navigate('/home', { replace: true });
+          return;
+        }
+        
+        // Only show error for actual failures
+        setError(errorMessage);
         setIsLoading(false);
         isProcessingToken = false;
       }
