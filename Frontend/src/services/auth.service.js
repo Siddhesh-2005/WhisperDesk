@@ -1,7 +1,6 @@
 import axiosInstance from '../config/axios.config';
 
 const authService = {
-  // Send magic link to email
   sendEmail: async (email) => {
     const response = await axiosInstance.post('/users/send-email', {
       incomingEmail: email,
@@ -10,7 +9,7 @@ const authService = {
     return response.data;
   },
 
-  // Login with magic token
+
   login: async (magictoken) => {
     const response = await axiosInstance.get(`/users/login?magictoken=${magictoken}`);
 
@@ -21,7 +20,7 @@ const authService = {
     return response.data;
   },
 
-  // Logout user
+
   logout: async () => {
     const response = await axiosInstance.post('/users/logout');
     
@@ -30,7 +29,7 @@ const authService = {
     return response.data;
   },
 
-  // Get current user
+
   getUser: async () => {
     const response = await axiosInstance.get('/users/get-user');
     

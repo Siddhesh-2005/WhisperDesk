@@ -24,7 +24,6 @@ function HomePage() {
   const [fetchError, setFetchError] = useState(null);
   const { toasts, showToast, removeToast } = useToast();
 
-  // Load posts and user's liked posts on mount
   useEffect(() => {
     let isMounted = true;
 
@@ -33,7 +32,6 @@ function HomePage() {
         setIsLoadingPosts(true);
         setFetchError(null);
         
-        // Fetch posts and user's likes in parallel
         const [postsResponse, likesResponse] = await Promise.all([
           postService.getPosts({ page: 1, limit: 10 }),
           likeService.getUserLikes({ page: 1, limit: 100 }).catch(() => ({ data: { likes: [] } }))
@@ -44,7 +42,6 @@ function HomePage() {
         const postsData = postsResponse.data?.posts || [];
         const likedPostsData = likesResponse.data?.likes || [];
         
-        // Initialize liked posts Set
         const likedPostIds = new Set(likedPostsData.map(post => post._id));
         setLikedPosts(likedPostIds);
         
@@ -52,7 +49,6 @@ function HomePage() {
         setCurrentPage(1);
         setTotalPages(postsResponse.data?.pagination?.totalPages || 1);
 
-        // Initialize like counts and comment maps
         const likesMap = {};
         const commentsMap = {};
         const countsMap = {};
@@ -65,7 +61,6 @@ function HomePage() {
         setPostComments(commentsMap);
         setCommentsCount(countsMap);
       } catch (error) {
-        console.error('Failed to fetch posts:', error);
         if (isMounted) {
           setFetchError('Failed to load posts. Please try again later.');
         }
@@ -93,22 +88,14 @@ function HomePage() {
         image: formData.image,
       });
 
-      // Post is submitted for moderation, show success message and close form
       showToast('Post submitted for moderation! It will appear once reviewed by AI.', 'success');
       setShowCreateForm(false);
-      
-      // Optionally, you can refetch posts to see if any new ones were published
-      // For now, just close the form and let user refresh if needed
     } catch (error) {
-      console.error('Failed to create post:', error);
-      
-      // Handle rejection or moderation failure gracefully
       const statusCode = error.response?.status;
       const errorData = error.response?.data;
       const reason = errorData?.data?.reason || errorData?.message || error.message;
       
       if (statusCode === 500 || statusCode === 400 || statusCode === 403) {
-        // Post was rejected by moderation
         showToast(`⚠️ Post Rejected\n\nYour post could not be published.\n\nReason: ${reason}`, 'error', 6000);
       } else {
         showToast('Failed to create post: ' + reason, 'error');
@@ -141,7 +128,6 @@ function HomePage() {
         }));
       }
     } catch (error) {
-      console.error('Failed to toggle like:', error);
     } finally {
       setIsLoadingLike(prev => ({ ...prev, [postId]: false }));
     }
@@ -150,16 +136,11 @@ function HomePage() {
   const handleAddComment = async (postId, content) => {
     try {
       const response = await commentService.createComment(postId, content);
-      // Backend returns the comment directly in response.data (not response.data.comment)
       const newComment = response?.data ?? response;
-      
-      console.log('New comment response:', response);
-      console.log('New comment:', newComment);
 
       if (newComment && newComment._id) {
         setPostComments(prev => ({
           ...prev,
-          // Prepend to keep latest first like server sorting
           [postId]: [newComment, ...(prev[postId] || [])],
         }));
         setCommentsCount(prev => ({
@@ -168,7 +149,6 @@ function HomePage() {
         }));
       }
     } catch (error) {
-      console.error('Failed to add comment:', error);
       showToast('Failed to add comment', 'error');
     }
   };
@@ -200,7 +180,6 @@ function HomePage() {
         setCommentsCount(prev => ({ ...prev, [postId]: fetchedComments.length }));
       }
     } catch (error) {
-      console.error('Failed to load comments:', error);
     } finally {
       setIsLoadingComments(prev => ({ ...prev, [postId]: false }));
     }
@@ -213,7 +192,6 @@ function HomePage() {
     try {
       showToast('Post reported. Thank you for helping keep the community safe.', 'success');
     } catch (error) {
-      console.error('Failed to report post:', error);
       showToast('Failed to report post', 'error');
     }
   };
@@ -230,7 +208,6 @@ function HomePage() {
       setPosts(prev => [...prev, ...newPosts]);
       setCurrentPage(nextPage);
 
-      // Add like counts and comment maps for new posts
       const likesMap = { ...postLikes };
       const commentsMap = { ...postComments };
       const countsMap = { ...commentsCount };
@@ -243,7 +220,6 @@ function HomePage() {
       setPostComments(commentsMap);
       setCommentsCount(countsMap);
     } catch (error) {
-      console.error('Failed to load more posts:', error);
     } finally {
       setIsLoadingPosts(false);
     }

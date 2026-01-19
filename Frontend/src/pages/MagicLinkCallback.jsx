@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { setUser } from '../store/slices/authSlice';
 import axiosInstance from '../config/axios.config';
 
-// Module-level flag to prevent duplicate requests across re-mounts
+
 let isProcessingToken = false;
 
 function MagicLinkCallback() {
@@ -23,12 +23,6 @@ function MagicLinkCallback() {
       return;
     }
 
-    // Prevent duplicate requests
-    if (isProcessingToken) {
-      console.log('Already processing token, skipping...');
-      return;
-    }
-
     isProcessingToken = true;
 
     const handleMagicLink = async () => {
@@ -38,10 +32,8 @@ function MagicLinkCallback() {
         });
         
         if (response.data?.data?.user) {
-          // Store user in localStorage and Redux
           localStorage.setItem('user', JSON.stringify(response.data.data.user));
           dispatch(setUser(response.data.data.user));
-          // Reset flag before navigation
           isProcessingToken = false;
           navigate('/home', { replace: true });
         } else {
@@ -50,18 +42,14 @@ function MagicLinkCallback() {
           isProcessingToken = false;
         }
       } catch (err) {
-        console.error('Magic link error:', err);
         const errorMessage = err.response?.data?.message || 'Invalid or expired magic link';
         
-        // If token was already used, it means first request succeeded - redirect to home
         if (errorMessage.includes('already used')) {
-          console.log('Token already used (first request likely succeeded), redirecting...');
           isProcessingToken = false;
           navigate('/home', { replace: true });
           return;
         }
         
-        // Only show error for actual failures
         setError(errorMessage);
         setIsLoading(false);
         isProcessingToken = false;
@@ -70,10 +58,7 @@ function MagicLinkCallback() {
 
     handleMagicLink();
 
-    // Cleanup on unmount
-    return () => {
-      // Don't reset if navigating to home (successful login)
-    };
+    return () => {};
   }, [searchParams, navigate, dispatch]);
 
   if (isLoading && !error) {

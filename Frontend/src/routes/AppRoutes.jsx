@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import { lazy, Suspense } from 'react';
 import ProtectedRoute from '../components/ProtectedRoute';
 
-// Lazy load pages for faster initial load
 const LandingPage = lazy(() => import('../pages/LandingPage'));
 const HomePage = lazy(() => import('../pages/HomePage'));
 const MagicLinkCallback = lazy(() => import('../pages/MagicLinkCallback'));

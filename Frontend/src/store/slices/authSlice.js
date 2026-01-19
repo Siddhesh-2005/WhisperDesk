@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from '../../services/auth.service';
 
-// Get user from localStorage
 const user = JSON.parse(localStorage.getItem('user'));
 
 const initialState = {
@@ -14,7 +13,6 @@ const initialState = {
   emailSent: false,
 };
 
-// Send magic link email
 export const sendEmail = createAsyncThunk(
   'auth/sendEmail',
   async (email, thunkAPI) => {
@@ -31,7 +29,6 @@ export const sendEmail = createAsyncThunk(
   }
 );
 
-// Login with magic token
 export const login = createAsyncThunk(
   'auth/login',
   async (magictoken, thunkAPI) => {
@@ -48,7 +45,6 @@ export const login = createAsyncThunk(
   }
 );
 
-// Logout user
 export const logout = createAsyncThunk('auth/logout', async (_, thunkAPI) => {
   try {
     await authService.logout();
@@ -61,14 +57,11 @@ export const logout = createAsyncThunk('auth/logout', async (_, thunkAPI) => {
   }
 });
 
-// Get current user
 export const getUser = createAsyncThunk(
   'auth/getUser',
   async (_, thunkAPI) => {
     try {
       const response = await authService.getUser();
-      // authService.getUser returns response.data which is { statusCode, data: user, message }
-      // So we need to return response.data (the user object)
       return response.data;
     } catch (error) {
       const message =
@@ -98,7 +91,6 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Send Email
       .addCase(sendEmail.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
@@ -117,7 +109,6 @@ const authSlice = createSlice({
         state.message = action.payload;
         state.emailSent = false;
       })
-      // Login
       .addCase(login.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
@@ -136,7 +127,6 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
       })
-      // Logout
       .addCase(logout.pending, (state) => {
         state.isLoading = true;
       })
@@ -151,7 +141,6 @@ const authSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      // Get user
       .addCase(getUser.pending, (state) => {
         state.isLoading = true;
       })

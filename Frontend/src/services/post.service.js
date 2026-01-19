@@ -1,7 +1,6 @@
 import axiosInstance from '../config/axios.config';
 
 const postService = {
-  // Create a post (optionally with image)
   createPost: async ({ title, content, category, image }) => {
     const hasFile = !!image;
 
@@ -26,7 +25,6 @@ const postService = {
     return res.data;
   },
 
-  // Get published posts with pagination, filter and search
   getPosts: async ({ page = 1, limit = 10, category, search } = {}) => {
     const params = new URLSearchParams();
     if (page) params.append('page', page);
@@ -38,13 +36,11 @@ const postService = {
     return res.data;
   },
 
-  // Get single published post by id
   getPost: async (postId) => {
     const res = await axiosInstance.get(`/posts/${postId}`);
     return res.data;
   },
 
-  // Update post (title/content/category). Only author can update.
   updatePost: async (postId, { title, content, category }) => {
     const payload = {};
     if (title !== undefined) payload.title = title;
@@ -55,13 +51,11 @@ const postService = {
     return res.data;
   },
 
-  // Delete post (soft delete). Only author can delete.
   deletePost: async (postId) => {
     const res = await axiosInstance.delete(`/posts/${postId}`);
     return res.data;
   },
 
-  // Get currently authenticated user's own posts
   getUserPosts: async ({ page = 1, limit = 10 } = {}) => {
     const params = new URLSearchParams();
     if (page) params.append('page', page);
@@ -71,7 +65,6 @@ const postService = {
     return res.data;
   },
 
-  // Get posts by category (published)
   getPostsByCategory: async (category, { page = 1, limit = 10 } = {}) => {
     const params = new URLSearchParams();
     if (page) params.append('page', page);

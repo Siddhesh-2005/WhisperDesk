@@ -16,7 +16,6 @@ const initialState = {
   message: '',
 };
 
-// Thunks
 export const createPost = createAsyncThunk(
   'posts/createPost',
   async (payload, thunkAPI) => {
@@ -124,7 +123,6 @@ const postSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // createPost
       .addCase(createPost.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
@@ -141,7 +139,6 @@ const postSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      // getPosts
       .addCase(getPosts.pending, (state) => {
         state.isLoading = true;
       })
@@ -155,7 +152,6 @@ const postSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      // getPost
       .addCase(getPost.pending, (state) => {
         state.isLoading = true;
       })
@@ -168,7 +164,6 @@ const postSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      // updatePost
       .addCase(updatePost.pending, (state) => {
         state.isLoading = true;
       })
@@ -176,7 +171,6 @@ const postSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.currentPost = action.payload;
-        // Optionally update in lists if present
         const updateInList = (list) => {
           const idx = list.findIndex((p) => p._id === action.payload._id);
           if (idx !== -1) list[idx] = action.payload;
@@ -190,7 +184,6 @@ const postSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      // deletePost
       .addCase(deletePost.pending, (state) => {
         state.isLoading = true;
       })
@@ -210,7 +203,6 @@ const postSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      // getUserPosts
       .addCase(getUserPosts.pending, (state) => {
         state.isLoading = true;
       })
@@ -224,7 +216,6 @@ const postSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      // getPostsByCategory
       .addCase(getPostsByCategory.pending, (state) => {
         state.isLoading = true;
       })

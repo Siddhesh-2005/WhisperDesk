@@ -13,7 +13,6 @@ function CommentsDropdown({ postId, isOpen, onClose, comments = [], onAddComment
       await onAddComment(postId, newComment.trim());
       setNewComment('');
     } catch (error) {
-      console.error('Failed to add comment:', error);
     } finally {
       setIsSubmitting(false);
     }
