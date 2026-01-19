@@ -16,9 +16,16 @@ const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
     : []
 
+// In production, use strict origin checking; in dev, allow all origins for testing
+const corsOrigin = process.env.NODE_ENV === "production" && allowedOrigins.length 
+    ? allowedOrigins 
+    : true; // true allows all origins
+
 app.use(cors({
-    origin: allowedOrigins.length ? allowedOrigins : process.env.CORS_ORIGIN,
-    credentials: true
+    origin: corsOrigin,
+    credentials: true,
+    exposedHeaders: ['Set-Cookie'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }))
 
 app.use(express.json({
