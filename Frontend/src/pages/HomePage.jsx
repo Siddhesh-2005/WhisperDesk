@@ -29,15 +29,12 @@ function HomePage() {
       try {
         setIsLoadingPosts(true);
         setFetchError(null);
-        // Load fewer posts initially (10 instead of 20) for faster rendering
+        // Load fewer posts initially for faster rendering
         const response = await postService.getPosts({ page: 1, limit: 10 });
         
         if (!isMounted) return;
         
-        console.log('Posts response:', response);
-        
         const postsData = response.data?.posts || [];
-        console.log('Posts data:', postsData);
         
         setPosts(postsData);
         setCurrentPage(1);
