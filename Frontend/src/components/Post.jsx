@@ -105,7 +105,9 @@ function Post({
               : 'bg-gray-100 text-black hover:bg-gray-200'
           }`}
         >
-          <span>♥</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
           <span>{likesCount}</span>
         </button>
 
@@ -114,7 +116,9 @@ function Post({
             onClick={handleCommentClick}
             className="flex items-center gap-2 px-4 py-2 border-3 border-black font-bold text-sm uppercase rounded-lg bg-[#00b4ff] shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] transition-all"
           >
-            <span>💬</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
             <span>{commentsCount}</span>
           </button>
 
@@ -132,7 +136,10 @@ function Post({
           onClick={() => onReport(post._id)}
           className="flex items-center gap-2 px-4 py-2 border-3 border-black font-bold text-sm uppercase rounded-lg bg-yellow-300 shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] transition-all"
         >
-          <span>🚩</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+            <line x1="4" y1="22" x2="4" y2="15"></line>
+          </svg>
           
         </button>
       </div>
