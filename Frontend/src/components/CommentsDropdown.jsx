@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-function CommentsDropdown({ postId, isOpen, onClose, comments = [], onAddComment }) {
+function CommentsDropdown({ postId, isOpen, onClose, comments = [], onAddComment, isLoading = false }) {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,22 +52,26 @@ function CommentsDropdown({ postId, isOpen, onClose, comments = [], onAddComment
         </div>
 
         <div className="divide-y-2 divide-black">
-          {comments.length === 0 ? (
+          {isLoading ? (
+            <div className="p-4 text-center text-sm text-gray-600">Loading comments...</div>
+          ) : comments.length === 0 ? (
             <div className="p-4 text-center text-sm text-gray-600">
               No comments yet. Be the first!
             </div>
           ) : (
-            comments.filter(comment => comment && comment._id).map((comment) => (
-              <div key={comment._id} className="p-3">
-                <p className="font-bold text-xs uppercase mb-1">
-                  {comment.author?.username || comment.authorId?.username || 'Anon'}
-                </p>
-                <p className="text-sm leading-relaxed">{comment.content}</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  {new Date(comment.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            ))
+            comments
+              .filter((comment) => comment && comment._id)
+              .map((comment) => (
+                <div key={comment._id} className="p-3">
+                  <p className="font-bold text-xs uppercase mb-1">
+                    {comment.author?.username || comment.authorId?.username || 'Anon'}
+                  </p>
+                  <p className="text-sm leading-relaxed">{comment.content}</p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {new Date(comment.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ))
           )}
         </div>
       </div>

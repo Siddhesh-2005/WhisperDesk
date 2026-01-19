@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar.jsx';
 import Post from '../components/Post.jsx';
 import CreatePostForm from '../components/CreatePostForm.jsx';
@@ -17,10 +16,10 @@ function HomePage() {
   const [postLikes, setPostLikes] = useState({});
   const [postComments, setPostComments] = useState({});
   const [commentsCount, setCommentsCount] = useState({});
+  const [isLoadingComments, setIsLoadingComments] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [fetchError, setFetchError] = useState(null);
-  const dispatch = useDispatch();
 
   // Load posts on mount
   useEffect(() => {
@@ -140,7 +139,7 @@ function HomePage() {
     try {
       const response = await commentService.createComment(postId, content);
       // Backend returns the comment directly in response.data (not response.data.comment)
-      const newComment = response.data;
+      const newComment = response?.data ?? response;
       
       console.log('New comment response:', response);
       console.log('New comment:', newComment);
@@ -148,7 +147,8 @@ function HomePage() {
       if (newComment && newComment._id) {
         setPostComments(prev => ({
           ...prev,
-          [postId]: [...(prev[postId] || []), newComment],
+          // Prepend to keep latest first like server sorting
+          [postId]: [newComment, ...(prev[postId] || [])],
         }));
         setCommentsCount(prev => ({
           ...prev,
@@ -158,6 +158,39 @@ function HomePage() {
     } catch (error) {
       console.error('Failed to add comment:', error);
       alert('Failed to add comment');
+    }
+  };
+
+  const handleOpenComments = async (postId) => {
+    if (isLoadingComments[postId]) return;
+
+    const loadedCount = postComments[postId]?.length || 0;
+    const expectedCount = commentsCount[postId] || 0;
+    const shouldFetch = loadedCount === 0 || loadedCount < expectedCount;
+
+    if (!shouldFetch) return;
+
+    setIsLoadingComments(prev => ({ ...prev, [postId]: true }));
+    try {
+      const response = await commentService.getPostComments(postId, { page: 1, limit: 50 });
+      const payload = response?.data || {};
+      const fetchedComments = payload.comments || [];
+      const totalFromServer = payload.pagination?.totalComments;
+
+      setPostComments(prev => ({
+        ...prev,
+        [postId]: fetchedComments,
+      }));
+
+      if (typeof totalFromServer === 'number') {
+        setCommentsCount(prev => ({ ...prev, [postId]: totalFromServer }));
+      } else {
+        setCommentsCount(prev => ({ ...prev, [postId]: fetchedComments.length }));
+      }
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+    } finally {
+      setIsLoadingComments(prev => ({ ...prev, [postId]: false }));
     }
   };
 
@@ -252,6 +285,8 @@ function HomePage() {
                 onAddComment={handleAddComment}
                 onReport={handleReport}
                 isLoadingLike={isLoadingLike[post._id]}
+                onOpenComments={handleOpenComments}
+                isLoadingComments={isLoadingComments[post._id]}
               />
             ))}
 

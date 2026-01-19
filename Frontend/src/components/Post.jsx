@@ -27,6 +27,8 @@ function Post({
   onAddComment,
   onReport,
   isLoadingLike,
+  onOpenComments,
+  isLoadingComments,
 }) {
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
@@ -34,6 +36,9 @@ function Post({
     post?.authorId?.username || post?.author?.username || 'Anonymous';
 
   const handleCommentClick = () => {
+    if (!isCommentsOpen && onOpenComments) {
+      onOpenComments(post._id);
+    }
     setIsCommentsOpen(!isCommentsOpen);
   };
 
@@ -119,6 +124,7 @@ function Post({
             onClose={() => setIsCommentsOpen(false)}
             comments={allComments}
             onAddComment={onAddComment}
+            isLoading={isLoadingComments}
           />
         </div>
 
