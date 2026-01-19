@@ -21,32 +21,44 @@ function HomePage() {
   const [totalPages, setTotalPages] = useState(1);
   const [fetchError, setFetchError] = useState(null);
 
-  // Load posts on mount
+  // Load posts and user's liked posts on mount
   useEffect(() => {
     let isMounted = true;
 
-    const fetchPosts = async () => {
+    const fetchData = async () => {
       try {
         setIsLoadingPosts(true);
         setFetchError(null);
-        // Load fewer posts initially for faster rendering
-        const response = await postService.getPosts({ page: 1, limit: 10 });
+        
+        // Fetch posts and user's likes in parallel
+        const [postsResponse, likesResponse] = await Promise.all([
+          postService.getPosts({ page: 1, limit: 10 }),
+          likeService.getUserLikes({ page: 1, limit: 100 }).catch(() => ({ data: { likes: [] } }))
+        ]);
         
         if (!isMounted) return;
         
-        const postsData = response.data?.posts || [];
+        const postsData = postsResponse.data?.posts || [];
+        const likedPostsData = likesResponse.data?.likes || [];
+        
+        // Initialize liked posts Set
+        const likedPostIds = new Set(likedPostsData.map(post => post._id));
+        setLikedPosts(likedPostIds);
         
         setPosts(postsData);
         setCurrentPage(1);
-        setTotalPages(response.data?.pagination?.totalPages || 1);
+        setTotalPages(postsResponse.data?.pagination?.totalPages || 1);
 
-        // Initialize comment maps with post's comment count
+        // Initialize like counts and comment maps
+        const likesMap = {};
         const commentsMap = {};
         const countsMap = {};
         postsData.forEach((post) => {
+          likesMap[post._id] = post.likesCount || 0;
           commentsMap[post._id] = [];
           countsMap[post._id] = post.commentsCount || 0;
         });
+        setPostLikes(likesMap);
         setPostComments(commentsMap);
         setCommentsCount(countsMap);
       } catch (error) {
@@ -61,7 +73,7 @@ function HomePage() {
       }
     };
 
-    fetchPosts();
+    fetchData();
 
     return () => {
       isMounted = false;
@@ -214,13 +226,16 @@ function HomePage() {
       setPosts(prev => [...prev, ...newPosts]);
       setCurrentPage(nextPage);
 
-      // Add comment maps for new posts
+      // Add like counts and comment maps for new posts
+      const likesMap = { ...postLikes };
       const commentsMap = { ...postComments };
       const countsMap = { ...commentsCount };
       newPosts.forEach((post) => {
+        likesMap[post._id] = post.likesCount || 0;
         commentsMap[post._id] = [];
         countsMap[post._id] = post.commentsCount || 0;
       });
+      setPostLikes(likesMap);
       setPostComments(commentsMap);
       setCommentsCount(countsMap);
     } catch (error) {
