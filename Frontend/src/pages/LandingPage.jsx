@@ -45,10 +45,10 @@ function LandingPage() {
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
         <header className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-[var(--ink)] text-[var(--sand)] border-4 border-black rounded-xl grid place-items-center shadow-[8px_8px_0_#0f172a] font-bold">C</div>
+            <div className="h-12 w-12 bg-[var(--ink)] text-[var(--sand)] border-4 border-black rounded-xl grid place-items-center shadow-[8px_8px_0_#0f172a] font-bold">WD</div>
             <div>
-              <p className="text-sm font-semibold tracking-[0.12em] uppercase">Campus Confessions</p>
-              <p className="text-base font-medium text-[var(--ink)]/70">Anonymous blogging for college students</p>
+              <p className="text-sm font-semibold tracking-[0.12em] uppercase">WhisperDesk</p>
+              <p className="text-base font-medium text-[var(--ink)]/70">Anonymous. Raw. Unfiltered.</p>
             </div>
           </div>
           <div className="hidden sm:flex items-center gap-3">
