@@ -117,6 +117,10 @@ const login = asyncHandler(async (req, res) => {
     const acceptHeader = req.get('Accept') || '';
     const isAPIRequest = acceptHeader.includes('application/json');
 
+    // Log cookie setting for debugging
+    console.log("🍪 Setting cookie with options:", JSON.stringify(options));
+    console.log("🍪 Access token generated:", accessToken ? "YES" : "NO");
+
     if (isAPIRequest) {
         // API request - return JSON (frontend will handle redirect)
         return res
@@ -126,10 +130,9 @@ const login = asyncHandler(async (req, res) => {
     }
 
     // Direct browser navigation - redirect to frontend
-    return res
-        .status(200)
-        .cookie("accessToken", accessToken, options)
-        .redirect(`${frontendURL}/home`);
+    // Set cookie first, then redirect
+    res.cookie("accessToken", accessToken, options);
+    return res.redirect(302, `${frontendURL}/home`);
 });
 
 const getUser=asyncHandler(async(req,res)=>{
@@ -147,4 +150,17 @@ const logout = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, "Logout successful"));
 });
 
-export { sendEmail, login, getUser, logout };
+// Test endpoint to verify cookie setting works
+const testCookie = asyncHandler(async (req, res) => {
+    const testValue = "test_" + Date.now();
+    
+    console.log("🧪 Testing cookie with options:", JSON.stringify(options));
+    console.log("🧪 Setting test cookie with value:", testValue);
+    
+    return res
+        .status(200)
+        .cookie("testCookie", testValue, options)
+        .json(new ApiResponse(200, { testValue, options }, "Test cookie set"));
+});
+
+export { sendEmail, login, getUser, logout, testCookie };
