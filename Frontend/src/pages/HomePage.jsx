@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar.jsx';
 import Post from '../components/Post.jsx';
 import CreatePostForm from '../components/CreatePostForm.jsx';
+import Toast from '../components/Toast.jsx';
+import { useToast } from '../hooks/useToast.js';
 import postService from '../services/post.service';
 import likeService from '../services/like.service';
 import commentService from '../services/comment.service';
@@ -20,6 +22,7 @@ function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [fetchError, setFetchError] = useState(null);
+  const { toasts, showToast, removeToast } = useToast();
 
   // Load posts and user's liked posts on mount
   useEffect(() => {
@@ -91,7 +94,7 @@ function HomePage() {
       });
 
       // Post is submitted for moderation, show success message and close form
-      alert('Post submitted for moderation! It will appear once reviewed by AI.');
+      showToast('Post submitted for moderation! It will appear once reviewed by AI.', 'success');
       setShowCreateForm(false);
       
       // Optionally, you can refetch posts to see if any new ones were published
@@ -106,9 +109,9 @@ function HomePage() {
       
       if (statusCode === 500 || statusCode === 400 || statusCode === 403) {
         // Post was rejected by moderation
-        alert(`⚠️ Post Rejected\n\nYour post could not be published.\n\nReason: ${reason}`);
+        showToast(`⚠️ Post Rejected\n\nYour post could not be published.\n\nReason: ${reason}`, 'error', 6000);
       } else {
-        alert('Failed to create post: ' + reason);
+        showToast('Failed to create post: ' + reason, 'error');
       }
     } finally {
       setIsLoadingCreate(false);
@@ -166,7 +169,7 @@ function HomePage() {
       }
     } catch (error) {
       console.error('Failed to add comment:', error);
-      alert('Failed to add comment');
+      showToast('Failed to add comment', 'error');
     }
   };
 
@@ -208,9 +211,10 @@ function HomePage() {
     if (!reason) return;
 
     try {
-      alert('Post reported. Thank you for helping keep the community safe.');
+      showToast('Post reported. Thank you for helping keep the community safe.', 'success');
     } catch (error) {
       console.error('Failed to report post:', error);
+      showToast('Failed to report post', 'error');
     }
   };
 
@@ -322,6 +326,17 @@ function HomePage() {
           </div>
         )}
       </div>
+
+      {/* Toast Notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
     </div>
   );
 }

@@ -20,7 +20,6 @@ function CreatePostForm({ onSubmit, isLoading, onCancel }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!content.trim()) {
-      alert('Content is required');
       return;
     }
 
