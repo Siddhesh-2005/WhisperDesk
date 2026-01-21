@@ -11,7 +11,8 @@ export const sendEmail = async (email, url) => {
     }
 
     const { data, error } = await resend.emails.send({
-      from: process.env.SENDER_EMAIL || 'whisperdesk26@gmail.com',
+      //from: process.env.SENDER_EMAIL || 'whisperdesk26@gmail.com',
+      from: 'onboarding@resend.dev',
       to: email,
       subject: "Your Magic Login Link ✔",
       html: `
