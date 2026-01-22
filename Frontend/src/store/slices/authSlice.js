@@ -7,6 +7,7 @@ const initialState = {
   user: user || null,
   isAuthenticated: !!user,
   isLoading: false,
+  isLoadingEmail: false,
   isSuccess: false,
   isError: false,
   message: '',
@@ -92,19 +93,19 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(sendEmail.pending, (state) => {
-        state.isLoading = true;
+        state.isLoadingEmail = true;
         state.isError = false;
         state.message = '';
         state.emailSent = false;
       })
       .addCase(sendEmail.fulfilled, (state) => {
-        state.isLoading = false;
+        state.isLoadingEmail = false;
         state.isSuccess = true;
         state.emailSent = true;
         state.message = 'Magic link sent to your email';
       })
       .addCase(sendEmail.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingEmail = false;
         state.isError = true;
         state.message = action.payload;
         state.emailSent = false;

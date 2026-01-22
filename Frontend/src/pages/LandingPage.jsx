@@ -6,7 +6,7 @@ function LandingPage() {
   const [email, setEmail] = useState('');
   const [localError, setLocalError] = useState('');
   const dispatch = useDispatch();
-  const { isLoading, emailSent, isError, message } = useSelector((state) => state.auth);
+  const { isLoadingEmail, emailSent, isError, message } = useSelector((state) => state.auth);
 
   useEffect(() => {
     return () => {
@@ -125,10 +125,10 @@ function LandingPage() {
 
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoadingEmail}
                   className="w-full inline-flex justify-center items-center gap-2 px-4 py-3 rounded-xl border-4 border-black bg-[var(--accent)] text-base font-bold uppercase tracking-[0.08em] shadow-[10px_10px_0_#0f172a] transition-transform duration-150 active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-70"
                 >
-                  {isLoading ? 'Sending…' : 'Send magic link'}
+                  {isLoadingEmail ? 'Sending…' : 'Send magic link'}
                 </button>
               </form>
 
