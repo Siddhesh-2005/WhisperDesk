@@ -7,8 +7,8 @@ if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465, // SSL
-  secure: true,
+  port: 587, // TLS (more reliable on cloud platforms like Render)
+  secure: false, // Use TLS instead of SSL
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD, // must be an App Password, not the account password
