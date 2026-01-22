@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { sendEmail as send } from "../utils/mailer.resend.js";
+import { sendEmail as send } from "../utils/mailer.js";
 import { validateCollegeEmail } from "../services/validateEmail.service.js";
 import { User } from "../models/user.model.js";
 import { generateUniqueUsername } from "../services/generateUsername.service.js";
