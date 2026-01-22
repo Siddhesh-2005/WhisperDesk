@@ -1,34 +1,33 @@
-import nodemailer from "nodemailer"
+import nodemailer from "nodemailer";
 
-// Verify required environment variables
-if (!process.env.BREVO_SMTP_KEY) {
-  console.error("❌ BREVO_SMTP_KEY environment variable is not set!");
+// Verify required environment variables for Gmail SMTP
+if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+  console.error("❌ GMAIL_USER or GMAIL_APP_PASSWORD environment variable is not set!");
 }
 
 const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 465, // Use 465 for SSL (more reliable on cloud platforms)
-  secure: true, // true for port 465
+  host: "smtp.gmail.com",
+  port: 465, // SSL
+  secure: true,
   auth: {
-    user: process.env.BREVO_SMTP_USER || "9e331c001@smtp-brevo.com",
-    pass: process.env.BREVO_SMTP_KEY,
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD, // must be an App Password, not the account password
   },
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000, // 10 seconds
-  socketTimeout: 10000, // 10 seconds
-  logger: process.env.NODE_ENV === 'production' ? false : true,
-  debug: process.env.NODE_ENV !== 'production',
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
+  logger: process.env.NODE_ENV === "production" ? false : true,
+  debug: process.env.NODE_ENV !== "production",
 });
 
 // Verify transporter on startup (optional)
-if (process.env.BREVO_SMTP_KEY) {
-  transporter.verify((error, success) => {
+if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+  transporter.verify((error) => {
     if (error) {
-      console.error("❌ SMTP Configuration Error:", error.message);
-      console.log("💡 If you see connection timeout, Render might be blocking port 465.");
-      console.log("💡 Consider using a service like SendGrid, Mailgun, or Resend instead.");
+      console.error("❌ Gmail SMTP Configuration Error:", error.message);
+      console.log("💡 Ensure you are using a Gmail App Password and that IMAP/SMTP is allowed.");
     } else {
-      console.log("✅ SMTP server is ready to send emails");
+      console.log("✅ Gmail SMTP server is ready to send emails");
     }
   });
 }
@@ -36,12 +35,12 @@ if (process.env.BREVO_SMTP_KEY) {
 export const sendEmail = async (email, url) => {
   try {
     // Verify transporter configuration
-    if (!process.env.BREVO_SMTP_KEY) {
-      throw new Error("BREVO_SMTP_KEY is not configured");
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      throw new Error("GMAIL_USER or GMAIL_APP_PASSWORD is not configured");
     }
 
     const info = await transporter.sendMail({
-      from: process.env.SENDER_EMAIL || 'siddheshbagde456@gmail.com',
+      from: process.env.SENDER_EMAIL || process.env.GMAIL_USER,
       to: email,
       subject: "Your Magic Login Link ✔",
       text: `Click this link to login: ${url}`,
