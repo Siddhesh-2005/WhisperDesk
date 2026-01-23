@@ -111,26 +111,13 @@ const login = asyncHandler(async (req, res) => {
 
     const accessToken = user.generateAccessToken();
 
-    const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
-
-    // Check if request is from the frontend (via proxy/fetch) or direct browser navigation
-    const acceptHeader = req.get('Accept') || '';
-    const isAPIRequest = acceptHeader.includes('application/json');
+    const frontendURL = process.env.FRONTEND_URL || "https://whisper-desk.vercel.app";
 
     // Log cookie setting for debugging
     console.log("🍪 Setting cookie with options:", JSON.stringify(options));
     console.log("🍪 Access token generated:", accessToken ? "YES" : "NO");
 
-    if (isAPIRequest) {
-        // API request - return JSON (frontend will handle redirect)
-        return res
-            .status(200)
-            .cookie("accessToken", accessToken, options)
-            .json(new ApiResponse(200, { user: { id: user._id, email: user.email, username: user.username } }, "Login successful"));
-    }
-
-    // Direct browser navigation - redirect to frontend
-    // Set cookie first, then redirect
+    // Set cookie and redirect to frontend
     res.cookie("accessToken", accessToken, options);
     return res.redirect(302, `${frontendURL}/home`);
 });
