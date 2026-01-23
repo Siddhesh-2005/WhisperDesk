@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../store/slices/authSlice';
 import axiosInstance from '../config/axios.config';
 
-
-let isProcessingToken = false;
 
 function MagicLinkCallback() {
   const [searchParams] = useSearchParams();
@@ -13,8 +11,14 @@ function MagicLinkCallback() {
   const dispatch = useDispatch();
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const isProcessingRef = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate requests
+    if (isProcessingRef.current) {
+      return;
+    }
+
     const token = searchParams.get('token');
 
     if (!token) {
@@ -23,7 +27,7 @@ function MagicLinkCallback() {
       return;
     }
 
-    isProcessingToken = true;
+    isProcessingRef.current = true;
 
     const handleMagicLink = async () => {
       try {
@@ -34,25 +38,22 @@ function MagicLinkCallback() {
         if (response.data?.data?.user) {
           localStorage.setItem('user', JSON.stringify(response.data.data.user));
           dispatch(setUser(response.data.data.user));
-          isProcessingToken = false;
           navigate('/home', { replace: true });
         } else {
           setError('Login failed - no user data');
           setIsLoading(false);
-          isProcessingToken = false;
         }
       } catch (err) {
         const errorMessage = err.response?.data?.message || 'Invalid or expired magic link';
         
         if (errorMessage.includes('already used')) {
-          isProcessingToken = false;
+          // Token already used, redirect to home
           navigate('/home', { replace: true });
           return;
         }
         
         setError(errorMessage);
         setIsLoading(false);
-        isProcessingToken = false;
       }
     };
 
