@@ -1,69 +1,96 @@
-import nodemailer from "nodemailer";
+// Gmail API sender (HTTPS, no SMTP egress required)
+import { google } from "googleapis";
 
-// Verify required environment variables for Gmail SMTP
-if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-  console.error("❌ GMAIL_USER or GMAIL_APP_PASSWORD environment variable is not set!");
+// Required envs:
+// GMAIL_USER: account email to send from
+// GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN
+// Optional: SENDER_EMAIL (must be same as GMAIL_USER unless you use aliases)
+
+const requiredEnv = [
+  "GMAIL_USER",
+  "GMAIL_CLIENT_ID",
+  "GMAIL_CLIENT_SECRET",
+  "GMAIL_REFRESH_TOKEN",
+];
+
+for (const key of requiredEnv) {
+  if (!process.env[key]) {
+    console.error(`❌ Missing env ${key} for Gmail API sending`);
+  }
 }
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587, // TLS (more reliable on cloud platforms like Render)
-  secure: false, // Use TLS instead of SSL
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD, // must be an App Password, not the account password
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
-  logger: process.env.NODE_ENV === "production" ? false : true,
-  debug: process.env.NODE_ENV !== "production",
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GMAIL_CLIENT_ID,
+  process.env.GMAIL_CLIENT_SECRET,
+  // Redirect URI is not used at runtime; only needed when you created the refresh token
+  process.env.GMAIL_REDIRECT_URI || "https://developers.google.com/oauthplayground"
+);
+
+oauth2Client.setCredentials({
+  refresh_token: process.env.GMAIL_REFRESH_TOKEN,
 });
 
-// Verify transporter on startup (optional)
-if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-  transporter.verify((error) => {
-    if (error) {
-      console.error("❌ Gmail SMTP Configuration Error:", error.message);
-      console.log("💡 Ensure you are using a Gmail App Password and that IMAP/SMTP is allowed.");
-    } else {
-      console.log("✅ Gmail SMTP server is ready to send emails");
-    }
-  });
+const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+function buildRawMessage({ from, to, subject, html, text }) {
+  const headers = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    `MIME-Version: 1.0`,
+    `Content-Type: text/html; charset=UTF-8`,
+    `Content-Transfer-Encoding: 7bit`,
+  ];
+
+  const body = html || text || "";
+  const raw = headers.join("\r\n") + "\r\n\r\n" + body;
+  return Buffer.from(raw)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
 export const sendEmail = async (email, url) => {
   try {
-    // Verify transporter configuration
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-      throw new Error("GMAIL_USER or GMAIL_APP_PASSWORD is not configured");
+    // Ensure envs exist
+    for (const key of requiredEnv) {
+      if (!process.env[key]) {
+        throw new Error(`${key} is not configured`);
+      }
     }
 
-    const info = await transporter.sendMail({
-      from: process.env.SENDER_EMAIL || process.env.GMAIL_USER,
-      to: email,
-      subject: "Your Magic Login Link ✔",
-      text: `Click this link to login: ${url}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h2>Welcome to BlogApp!</h2>
-          <p>Click the button below to log in to your account:</p>
-          <a href="${url}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Login Now</a>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #666;">${url}</p>
-          <p style="color: #999; font-size: 12px; margin-top: 30px;">This link will expire in 15 minutes.</p>
-        </div>
-      `,
+    // Get a fresh access token (googleapis handles refresh automatically)
+    await oauth2Client.getAccessToken();
+
+    const from = process.env.SENDER_EMAIL || process.env.GMAIL_USER;
+    const subject = "Your Magic Login Link ✔";
+    const html = `
+      <div style=\"font-family: Arial, sans-serif; padding: 20px;\">
+        <h2>Welcome to BlogApp!</h2>
+        <p>Click the button below to log in to your account:</p>
+        <a href=\"${url}\" style=\"display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;\">Login Now</a>
+        <p>Or copy and paste this link into your browser:</p>
+        <p style=\"word-break: break-all; color: #666;\">${url}</p>
+        <p style=\"color: #999; font-size: 12px; margin-top: 30px;\">This link will expire in 15 minutes.</p>
+      </div>
+    `;
+
+    const raw = buildRawMessage({ from, to: email, subject, html });
+
+    const res = await gmail.users.messages.send({
+      userId: "me",
+      requestBody: { raw },
     });
 
-    console.log("✅ Email sent successfully:", email, "- Message ID:", info.messageId);
-    return { success: true, messageId: info.messageId };
+    const id = res?.data?.id || res?.data?.message?.id;
+    console.log("✅ Email sent via Gmail API:", email, "- ID:", id);
+    return { success: true, messageId: id };
   } catch (error) {
-    console.error("❌ Failed to send email to:", email);
-    console.error("Error details:", error.message);
-    console.error("Error code:", error.code);
-    if (error.response) {
-      console.error("SMTP Response:", error.response);
+    console.error("❌ Failed to send email via Gmail API to:", email);
+    console.error("Error details:", error?.message || error);
+    if (error?.response?.data) {
+      console.error("API Response:", JSON.stringify(error.response.data));
     }
     throw error;
   }
