@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { sendEmail, reset } from '../store/slices/authSlice';
+import { initiateLogin, reset } from '../store/slices/authSlice';
 
 function LandingPage() {
-  const [email, setEmail] = useState('');
-  const [localError, setLocalError] = useState('');
   const dispatch = useDispatch();
-  const { isLoadingEmail, emailSent, isError, message } = useSelector((state) => state.auth);
+  const { isLoading, isError, message } = useSelector((state) => state.auth);
 
   useEffect(() => {
     return () => {
@@ -14,25 +12,9 @@ function LandingPage() {
     };
   }, [dispatch]);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const trimmed = email.trim();
-
-    if (!trimmed) {
-      setLocalError('Please drop your email to get the magic link.');
-      return;
-    }
-
-    setLocalError('');
-    dispatch(sendEmail(trimmed));
+  const handleLogin = () => {
+    dispatch(initiateLogin());
   };
-
-  const status = (() => {
-    if (localError) return { tone: 'error', text: localError };
-    if (isError && message) return { tone: 'error', text: message };
-    if (emailSent) return { tone: 'success', text: 'Magic link is on its way. Check your inbox!' };
-    return null;
-  })();
 
   return (
     <div className="min-h-screen bg-[var(--sand)] text-[var(--ink)] relative overflow-hidden">
@@ -69,7 +51,7 @@ function LandingPage() {
             </h1>
 
             <p className="text-lg leading-relaxed max-w-2xl text-[var(--ink)]/80">
-              A safe space for college students to share thoughts, confessions, and stories without revealing their identity. Use your college email to verify you're a student — your posts remain anonymous.
+              A safe space for college students to share thoughts, confessions, and stories without revealing their identity. Sign in with your Microsoft account to verify you're a student — your posts remain anonymous.
             </p>
 
             <div className="grid sm:grid-cols-3 gap-4">
@@ -79,7 +61,7 @@ function LandingPage() {
                 color: 'bg-white'
               }, {
                 title: 'Students Only',
-                detail: 'Verified college emails keep the community authentic.',
+                detail: 'Verified college accounts keep the community authentic.',
                 color: 'bg-[var(--accent-2)]'
               }, {
                 title: 'Share Freely',
@@ -103,47 +85,45 @@ function LandingPage() {
 
             <div className="relative space-y-6">
               <div className="flex items-center gap-3">
-                <span className="h-10 w-10 rounded-2xl bg-[var(--ink)] text-[var(--sand)] grid place-items-center border-4 border-black shadow-[6px_6px_0_#0f172a] font-bold">@</span>
+                <span className="h-10 w-10 rounded-2xl bg-[var(--ink)] text-[var(--sand)] grid place-items-center border-4 border-black shadow-[6px_6px_0_#0f172a] font-bold text-xl">🔐</span>
                 <div>
                   <p className="text-xs uppercase tracking-[0.14em] font-semibold text-[var(--ink)]/70">Get Started</p>
-                  <p className="text-lg font-semibold">Enter your college email</p>
+                  <p className="text-lg font-semibold">Sign in with Microsoft</p>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <label className="flex flex-col gap-2 text-sm font-semibold">
-                  College Email
-                  <input
-                    type="email"
-                    name="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="you@college.edu"
-                    className="w-full rounded-xl border-4 border-black px-4 py-3 bg-[var(--sand)] text-base font-medium shadow-[8px_8px_0_#0f172a] focus:outline-none focus:ring-4 focus:ring-[var(--accent-2)]"
-                  />
-                </label>
-
+              <div className="space-y-4">
                 <button
-                  type="submit"
-                  disabled={isLoadingEmail}
-                  className="w-full inline-flex justify-center items-center gap-2 px-4 py-3 rounded-xl border-4 border-black bg-[var(--accent)] text-base font-bold uppercase tracking-[0.08em] shadow-[10px_10px_0_#0f172a] transition-transform duration-150 active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-70"
+                  onClick={handleLogin}
+                  disabled={isLoading}
+                  className="w-full inline-flex justify-center items-center gap-3 px-4 py-4 rounded-xl border-4 border-black bg-[#00A4EF] text-white text-base font-bold shadow-[10px_10px_0_#0f172a] transition-transform duration-150 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[8px_8px_0_#0f172a] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[6px_6px_0_#0f172a] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {isLoadingEmail ? 'Sending…' : 'Send magic link'}
+                  <svg className="w-6 h-6" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="11" height="11" fill="white"/>
+                    <rect x="12" width="11" height="11" fill="white"/>
+                    <rect y="12" width="11" height="11" fill="white"/>
+                    <rect x="12" y="12" width="11" height="11" fill="white"/>
+                  </svg>
+                  {isLoading ? 'Redirecting...' : 'Sign in with Microsoft'}
                 </button>
-              </form>
 
-              {status ? (
-                <div
-                  className={`rounded-xl border-[3px] px-4 py-3 text-sm font-semibold shadow-[6px_6px_0_#0f172a] ${status.tone === 'error' ? 'bg-red-200 border-black text-[var(--ink)]' : 'bg-green-200 border-black text-[var(--ink)]'}`}
-                  role="status"
-                >
-                  {status.text}
-                </div>
-              ) : null}
+                {isError && message && (
+                  <div
+                    className="rounded-xl border-[3px] px-4 py-3 text-sm font-semibold shadow-[6px_6px_0_#0f172a] bg-red-200 border-black text-[var(--ink)]"
+                    role="alert"
+                  >
+                    {message}
+                  </div>
+                )}
+              </div>
 
               <div className="flex items-center gap-3 text-sm font-medium text-[var(--ink)]/70">
                 <span className="inline-flex h-8 w-8 rounded-full border-[3px] border-black bg-white shadow-[4px_4px_0_#0f172a] items-center justify-center font-black">🔒</span>
-                Your email verifies you're a student. Your posts stay anonymous.
+                Your Microsoft account verifies you're a student. Your posts stay anonymous.
+              </div>
+
+              <div className="text-xs text-[var(--ink)]/60 leading-relaxed">
+                By signing in, you agree to use your institutional Microsoft account. Only your email domain is used for verification — your identity remains completely anonymous on the platform.
               </div>
             </div>
           </div>
@@ -154,3 +134,4 @@ function LandingPage() {
 }
 
 export default LandingPage;
+

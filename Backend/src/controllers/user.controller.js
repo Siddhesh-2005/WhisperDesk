@@ -1,153 +1,139 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { sendEmail as send } from "../utils/mailer.js";
-import { validateCollegeEmail } from "../services/validateEmail.service.js";
 import { User } from "../models/user.model.js";
-import { generateUniqueUsername } from "../services/generateUsername.service.js";
-import { createMagicToken } from "../services/magicToken.service.js";
-import redis from "../db/redis.upstash.js";
 import { options } from "../constants.js";
-import crypto from "crypto"
+import { getAuthCodeUrl, acquireTokenByCode, getUserProfile } from "../config/azureAd.config.js";
+import { validateCollegeEmail } from "../services/validateEmail.service.js";
+import { generateUniqueUsername } from "../services/generateUsername.service.js";
 
-const sendEmail = asyncHandler(async (req, res) => {
-    const { incomingEmail } = req.body;
+/**
+ * Initiate Azure AD OAuth2 login flow
+ * Returns the authorization URL for user to be redirected to
+ */
+const initiateLogin = asyncHandler(async (req, res) => {
+    try {
+        const authUrl = await getAuthCodeUrl();
+        
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { authUrl }, "Authorization URL generated successfully"));
+    } catch (error) {
+        console.error("Error initiating login:", error);
+        throw new ApiError(500, "Failed to initiate login");
+    }
+});
 
-    const email = validateCollegeEmail(incomingEmail);
-    if (!email.isValid) {
-        throw new ApiError(400, "Invalid college email");
+/**
+ * OAuth2 callback handler
+ * Exchanges authorization code for tokens and creates/updates user
+ */
+const oauthCallback = asyncHandler(async (req, res) => {
+    const { code } = req.query;
+
+    if (!code) {
+        throw new ApiError(400, "Authorization code missing");
     }
 
-    let user = await User.findOne({ email: incomingEmail });
-
-    // if user does not exist → create
-    if (!user) {
-        const username = await generateUniqueUsername();
-        if (!username) {
-            throw new ApiError(500, "Unable to generate username");
+    try {
+        // Exchange authorization code for tokens
+        const tokenResponse = await acquireTokenByCode(code);
+        
+        if (!tokenResponse || !tokenResponse.accessToken) {
+            throw new ApiError(401, "Failed to acquire access token");
         }
 
-        user = await User.create({
-            username,
-            email: incomingEmail,
-            branch: email.branch,
-            isActive: true,
-            emailVerification: true,
-        });
+        // Get user profile from Microsoft Graph
+        const profile = await getUserProfile(tokenResponse.accessToken);
+        
+        if (!profile || !profile.mail) {
+            throw new ApiError(400, "Failed to retrieve user profile or email");
+        }
+
+        const email = profile.mail.toLowerCase();
+        const azureId = profile.id;
+        const displayName = profile.displayName;
+
+        // Validate college email
+        const emailValidation = validateCollegeEmail(email);
+        if (!emailValidation.isValid) {
+            throw new ApiError(400, "Invalid college email. Please use your institutional email.");
+        }
+
+        // Find or create user
+        let user = await User.findOne({ $or: [{ email }, { azureId }] });
+
+        if (!user) {
+            // Create new user
+            const username = await generateUniqueUsername();
+            if (!username) {
+                throw new ApiError(500, "Unable to generate username");
+            }
+
+            user = await User.create({
+                username,
+                email,
+                azureId,
+                displayName,
+                branch: emailValidation.branch,
+                isActive: true,
+                emailVerification: true,
+                provider: 'azure',
+            });
+        } else {
+            // Update existing user with Azure AD info if not already set
+            if (!user.azureId) {
+                user.azureId = azureId;
+            }
+            if (!user.displayName) {
+                user.displayName = displayName;
+            }
+            user.provider = 'azure';
+            user.emailVerification = true;
+            await user.save();
+        }
+
+        // Generate JWT access token
+        const accessToken = user.generateAccessToken();
+
+        // Set cookie and redirect to frontend
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const redirectUrl = `${frontendUrl}/auth/callback?success=true`;
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .redirect(redirectUrl);
+            
+    } catch (error) {
+        console.error("OAuth callback error:", error);
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const errorUrl = `${frontendUrl}/auth/callback?error=${encodeURIComponent(error.message || "Authentication failed")}`;
+        return res.redirect(errorUrl);
     }
-
-    const userId = user._id.toString();
-
-    const rawToken = await createMagicToken(userId);
-
-    if (!rawToken) {
-        throw new ApiError(500, "Unable to generate magic token");
-    }
-
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const url = `${frontendUrl}/auth/callback?token=${rawToken}`;
-
-    await send(incomingEmail, url);
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200,rawToken, "Email sent successfully"));
 });
 
-const login = asyncHandler(async (req, res) => {
-    const { magictoken } = req.query;
-
-    if (!magictoken) {
-        throw new ApiError(400, "Magic token missing");
-    }
-
-    const tokenHash = crypto
-        .createHash("sha256")
-        .update(magictoken)
-        .digest("hex");
-
-    const key = `magic_token:${tokenHash}`;
-
-    console.log("🔍 Looking up token with key:", key);
-
-    const tokenData = await redis.hGetAll(key);
-
-    console.log("📦 Token data from Redis:", JSON.stringify(tokenData));
-
-    if (!tokenData || Object.keys(tokenData).length === 0) {
-        console.log("❌ Token not found in Redis");
-        throw new ApiError(401, "Token not found - it may have expired or been used");
-    }
-
-    if (tokenData.usedAt && tokenData.usedAt !== "") {
-        console.log("❌ Token already used at:", tokenData.usedAt);
-        throw new ApiError(401, "Magic token already used");
-    }
-
-    const now = new Date();
-    const expiresAt = new Date(tokenData.expiresAt);
-    console.log("⏰ Current time:", now.toISOString());
-    console.log("⏰ Token expires at:", tokenData.expiresAt);
-    console.log("⏰ Time diff (ms):", expiresAt.getTime() - now.getTime());
-
-    if (expiresAt < now) {
-        console.log("❌ Token expired");
-        throw new ApiError(401, "Magic token expired");
-    }
-
-    const user = await User.findById(tokenData.userId);
-
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
-
-    // Mark token as used (don't delete - let Redis TTL handle cleanup)
-    // This prevents race conditions with duplicate requests
-    await redis.hSet(key, {
-        usedAt: new Date().toISOString(),
-    });
-
-    console.log("✅ Token marked as used, login successful for user:", user.email);
-
-    const accessToken = user.generateAccessToken();
-
-    // Log cookie setting for debugging
-    console.log("🍪 Setting cookie with options:", JSON.stringify(options));
-    console.log("🍪 Access token generated:", accessToken ? "YES" : "NO");
-
-    // Set cookie and return JSON - frontend will handle navigation
-    return res
-        .status(200)
-        .cookie("accessToken", accessToken, options)
-        .json(new ApiResponse(200, { user: { id: user._id, email: user.email, username: user.username } }, "Login successful"));
-});
-
-const getUser=asyncHandler(async(req,res)=>{
+/**
+ * Get current authenticated user details
+ */
+const getUser = asyncHandler(async (req, res) => {
     res.status(200)
-    .json(new ApiResponse(
-        200,req.user,"User details sent successfully"
-    ))
-})
+        .json(new ApiResponse(
+            200,
+            req.user,
+            "User details sent successfully"
+        ));
+});
 
+/**
+ * Logout user by clearing access token cookie
+ */
 const logout = asyncHandler(async (req, res) => {
-    // Clear access token cookie; use same options for consistency
     res
         .status(200)
         .clearCookie("accessToken", { ...options, expires: new Date(0) })
-        .json(new ApiResponse(200, "Logout successful"));
+        .json(new ApiResponse(200, null, "Logout successful"));
 });
 
-// Test endpoint to verify cookie setting works
-const testCookie = asyncHandler(async (req, res) => {
-    const testValue = "test_" + Date.now();
-    
-    console.log("🧪 Testing cookie with options:", JSON.stringify(options));
-    console.log("🧪 Setting test cookie with value:", testValue);
-    
-    return res
-        .status(200)
-        .cookie("testCookie", testValue, options)
-        .json(new ApiResponse(200, { testValue, options }, "Test cookie set"));
-});
+export { initiateLogin, oauthCallback, getUser, logout };
 
-export { sendEmail, login, getUser, logout, testCookie };

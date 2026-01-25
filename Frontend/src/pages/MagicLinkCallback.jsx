@@ -1,11 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../store/slices/authSlice';
-import axiosInstance from '../config/axios.config';
+import { handleOAuthCallback } from '../store/slices/authSlice';
 
-
-function MagicLinkCallback() {
+function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -19,54 +17,53 @@ function MagicLinkCallback() {
       return;
     }
 
-    const token = searchParams.get('token');
+    const success = searchParams.get('success');
+    const errorParam = searchParams.get('error');
 
-    if (!token) {
-      setError('No magic token provided');
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+      setIsLoading(false);
+      return;
+    }
+
+    if (!success) {
+      setError('Invalid callback - no success parameter');
       setIsLoading(false);
       return;
     }
 
     isProcessingRef.current = true;
 
-    const handleMagicLink = async () => {
+    const handleCallback = async () => {
       try {
-        const response = await axiosInstance.get('/users/login', {
-          params: { magictoken: token }
-        });
+        const result = await dispatch(handleOAuthCallback()).unwrap();
         
-        if (response.data?.data?.user) {
-          localStorage.setItem('user', JSON.stringify(response.data.data.user));
-          dispatch(setUser(response.data.data.user));
+        if (result) {
+          // Successfully authenticated, redirect to home
           navigate('/home', { replace: true });
         } else {
-          setError('Login failed - no user data');
+          setError('Authentication failed - no user data');
           setIsLoading(false);
         }
       } catch (err) {
-        const errorMessage = err.response?.data?.message || 'Invalid or expired magic link';
-        
-        if (errorMessage.includes('already used')) {
-          // Token already used, redirect to home
-          navigate('/home', { replace: true });
-          return;
-        }
-        
+        const errorMessage = err || 'Authentication failed';
         setError(errorMessage);
         setIsLoading(false);
       }
     };
 
-    handleMagicLink();
+    handleCallback();
 
     return () => {};
   }, [searchParams, navigate, dispatch]);
 
   if (isLoading && !error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f4f4f4]">
-        <div className="text-center">
-          <p className="font-black text-2xl uppercase">Logging you in...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--sand)]">
+        <div className="text-center space-y-4">
+          <div className="animate-spin h-12 w-12 border-4 border-black border-t-transparent rounded-full mx-auto"></div>
+          <p className="font-black text-2xl uppercase text-[var(--ink)]">Authenticating...</p>
+          <p className="text-[var(--ink)]/70">Setting up your anonymous profile</p>
         </div>
       </div>
     );
@@ -74,13 +71,14 @@ function MagicLinkCallback() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f4f4f4]">
-        <div className="border-4 border-black bg-white p-8 shadow-[8px_8px_0_black] text-center">
-          <p className="font-black text-2xl uppercase mb-4 text-red-600">Login Failed</p>
-          <p className="mb-6">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--sand)] p-6">
+        <div className="border-4 border-black bg-white p-8 shadow-[12px_12px_0_#0f172a] text-center max-w-md rounded-2xl">
+          <span className="inline-block text-6xl mb-4">⚠️</span>
+          <p className="font-black text-2xl uppercase mb-4 text-red-600">Authentication Failed</p>
+          <p className="mb-6 text-[var(--ink)]/80">{error}</p>
           <a
             href="/"
-            className="inline-block px-6 py-3 bg-[#ff4d00] text-white border-4 border-black font-black uppercase shadow-[6px_6px_0_black]"
+            className="inline-block px-6 py-3 bg-[var(--accent)] text-[var(--ink)] border-4 border-black font-black uppercase shadow-[8px_8px_0_#0f172a] rounded-xl hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[6px_6px_0_#0f172a] transition-transform"
           >
             Back to Home
           </a>
@@ -92,4 +90,5 @@ function MagicLinkCallback() {
   return null;
 }
 
-export default MagicLinkCallback;
+export default OAuthCallback;
+

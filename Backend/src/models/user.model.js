@@ -30,6 +30,23 @@ const userSchema = new Schema(
             type: Boolean,
             default: false,
         },
+
+        // Azure AD OAuth fields
+        azureId: {
+            type: String,
+            unique: true,
+            sparse: true, // allows null values for users not using Azure AD
+        },
+
+        displayName: {
+            type: String,
+        },
+
+        provider: {
+            type: String,
+            enum: ['azure', 'local'],
+            default: 'azure',
+        },
     },
     { timestamps: true }
 );

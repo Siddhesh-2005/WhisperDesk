@@ -7,57 +7,52 @@ const initialState = {
   user: user || null,
   isAuthenticated: !!user,
   isLoading: false,
-  isLoadingEmail: false,
   isSuccess: false,
   isError: false,
   message: '',
-  emailSent: false,
 };
 
-export const sendEmail = createAsyncThunk(
-  'auth/sendEmail',
-  async (email, thunkAPI) => {
+/**
+ * Initiate Azure AD OAuth2 login
+ */
+export const initiateLogin = createAsyncThunk(
+  'auth/initiateLogin',
+  async (_, thunkAPI) => {
     try {
-      const response = await authService.sendEmail(email);
+      const response = await authService.initiateLogin();
       return response;
     } catch (error) {
       const message =
         error.response?.data?.message ||
         error.message ||
-        'Failed to send email';
+        'Failed to initiate login';
       return thunkAPI.rejectWithValue(message);
     }
   }
 );
 
-export const login = createAsyncThunk(
-  'auth/login',
-  async (magictoken, thunkAPI) => {
+/**
+ * Handle OAuth callback after redirect from Azure AD
+ */
+export const handleOAuthCallback = createAsyncThunk(
+  'auth/handleOAuthCallback',
+  async (_, thunkAPI) => {
     try {
-      const response = await authService.login(magictoken);
+      const response = await authService.handleOAuthCallback();
       return response.data;
     } catch (error) {
       const message =
         error.response?.data?.message ||
         error.message ||
-        'Login failed';
+        'Authentication failed';
       return thunkAPI.rejectWithValue(message);
     }
   }
 );
 
-export const logout = createAsyncThunk('auth/logout', async (_, thunkAPI) => {
-  try {
-    await authService.logout();
-  } catch (error) {
-    const message =
-      error.response?.data?.message ||
-      error.message ||
-      'Logout failed';
-    return thunkAPI.rejectWithValue(message);
-  }
-});
-
+/**
+ * Get current user details
+ */
 export const getUser = createAsyncThunk(
   'auth/getUser',
   async (_, thunkAPI) => {
@@ -74,6 +69,21 @@ export const getUser = createAsyncThunk(
   }
 );
 
+/**
+ * Logout user
+ */
+export const logout = createAsyncThunk('auth/logout', async (_, thunkAPI) => {
+  try {
+    await authService.logout();
+  } catch (error) {
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      'Logout failed';
+    return thunkAPI.rejectWithValue(message);
+  }
+});
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -83,7 +93,6 @@ const authSlice = createSlice({
       state.isSuccess = false;
       state.isError = false;
       state.message = '';
-      state.emailSent = false;
     },
     setUser: (state, action) => {
       state.user = action.payload;
@@ -92,56 +101,41 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(sendEmail.pending, (state) => {
-        state.isLoadingEmail = true;
-        state.isError = false;
-        state.message = '';
-        state.emailSent = false;
-      })
-      .addCase(sendEmail.fulfilled, (state) => {
-        state.isLoadingEmail = false;
-        state.isSuccess = true;
-        state.emailSent = true;
-        state.message = 'Magic link sent to your email';
-      })
-      .addCase(sendEmail.rejected, (state, action) => {
-        state.isLoadingEmail = false;
-        state.isError = true;
-        state.message = action.payload;
-        state.emailSent = false;
-      })
-      .addCase(login.pending, (state) => {
+      // Initiate Login
+      .addCase(initiateLogin.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
         state.message = '';
       })
-      .addCase(login.fulfilled, (state, action) => {
+      .addCase(initiateLogin.fulfilled, (state) => {
+        state.isLoading = false;
+        // Redirect happens in the service, no state change needed
+      })
+      .addCase(initiateLogin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+      // Handle OAuth Callback
+      .addCase(handleOAuthCallback.pending, (state) => {
+        state.isLoading = true;
+        state.isError = false;
+        state.message = '';
+      })
+      .addCase(handleOAuthCallback.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.user = action.payload.user;
+        state.user = action.payload;
         state.isAuthenticated = true;
       })
-      .addCase(login.rejected, (state, action) => {
+      .addCase(handleOAuthCallback.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
         state.user = null;
         state.isAuthenticated = false;
       })
-      .addCase(logout.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(logout.fulfilled, (state) => {
-        state.isLoading = false;
-        state.user = null;
-        state.isAuthenticated = false;
-        state.isSuccess = false;
-      })
-      .addCase(logout.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload;
-      })
+      // Get User
       .addCase(getUser.pending, (state) => {
         state.isLoading = true;
       })
@@ -156,9 +150,25 @@ const authSlice = createSlice({
         state.message = action.payload;
         state.user = null;
         state.isAuthenticated = false;
+      })
+      // Logout
+      .addCase(logout.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.isSuccess = false;
+      })
+      .addCase(logout.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
       });
   },
 });
 
 export const { reset, setUser } = authSlice.actions;
 export default authSlice.reducer;
+

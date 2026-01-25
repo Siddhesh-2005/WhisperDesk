@@ -1,17 +1,15 @@
 import { Router } from "express";
-import {login, sendEmail,getUser, logout, testCookie} from "../controllers/user.controller.js"
+import { initiateLogin, oauthCallback, getUser, logout } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
-const userRouter=Router()
+const userRouter = Router();
 
-userRouter.route("/send-email").post(sendEmail)
+// Azure AD OAuth2 routes
+userRouter.route("/oauth/login").get(initiateLogin);
+userRouter.route("/oauth/callback").get(oauthCallback);
 
-userRouter.route("/login").get(login)
+// Protected routes
+userRouter.route("/get-user").get(verifyJWT, getUser);
+userRouter.route("/logout").post(verifyJWT, logout);
 
-userRouter.route("/get-user").get(verifyJWT,getUser)
-
-userRouter.route("/logout").post(verifyJWT, logout)
-
-userRouter.route("/test-cookie").get(testCookie)
-
-export default userRouter
+export default userRouter;
