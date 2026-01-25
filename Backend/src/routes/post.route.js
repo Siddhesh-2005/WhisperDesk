@@ -28,6 +28,9 @@ postRouter.route("/").get(getPosts)
 // Get user's own posts
 postRouter.route("/user/posts").get(verifyJWT, getUserPosts)
 
+// Get posts liked by current user
+postRouter.route("/user/likes").get(verifyJWT, getUserLikes)
+
 // Get posts by category
 postRouter.route("/category/:category").get(getPostsByCategory)
 
@@ -45,7 +48,5 @@ postRouter.route("/:postId/like")
 // Get users who liked a post
 postRouter.route("/:postId/likes").get(getPostLikes)
 
-// Get posts liked by current user
-postRouter.route("/user/likes").get(verifyJWT, getUserLikes)
 
 export default postRouter
