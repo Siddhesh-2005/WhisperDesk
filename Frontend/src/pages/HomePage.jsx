@@ -23,6 +23,8 @@ function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [fetchError, setFetchError] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportPostId, setReportPostId] = useState(null);
   const { toasts, showToast, removeToast } = useToast();
 
   useEffect(() => {
@@ -187,39 +189,20 @@ function HomePage() {
   };
 
   const handleReport = async (postId) => {
-    // Create a custom dialog with enum options
-    const reportReasons = [
-      { value: 'SPAM', label: 'Spam or misleading content' },
-      { value: 'ABUSE', label: 'Abusive or harmful language' },
-      { value: 'HATE', label: 'Hate speech or discrimination' },
-      { value: 'OTHER', label: 'Other violations' }
-    ];
+    setReportPostId(postId);
+    setShowReportModal(true);
+  };
 
-    // Create a simple selection dialog
-    let reasonMessage = 'Select a reason for reporting this post:\n\n';
-    reportReasons.forEach((reason, index) => {
-      reasonMessage += `${index + 1}. ${reason.label}\n`;
-    });
-    reasonMessage += '\nEnter the number (1-4):';
-
-    const choice = prompt(reasonMessage);
-    if (!choice) return;
-
-    const choiceNum = parseInt(choice);
-    if (isNaN(choiceNum) || choiceNum < 1 || choiceNum > 4) {
-      showToast('Invalid selection. Please try again.', 'error');
-      return;
-    }
-
-    const selectedReason = reportReasons[choiceNum - 1].value;
-
+  const submitReport = async (reason) => {
     try {
       await reportService.createReport({
         targetType: 'POST',
-        targetId: postId,
-        reason: selectedReason
+        targetId: reportPostId,
+        reason: reason
       });
       showToast('Post reported. Thank you for helping keep the community safe.', 'success');
+      setShowReportModal(false);
+      setReportPostId(null);
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to report post';
       showToast(errorMessage, 'error');
@@ -260,6 +243,69 @@ function HomePage() {
       <Navbar onCreateClick={() => setShowCreateForm(!showCreateForm)} />
 
       <div className="max-w-3xl mx-auto px-6 py-8">
+        {/* Report Modal */}
+        {showReportModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+            onClick={() => {
+              setShowReportModal(false);
+              setReportPostId(null);
+            }}
+          >
+            <div
+              className="w-full max-w-md border-4 border-black bg-white rounded-lg shadow-[8px_8px_0_black] p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="font-black text-2xl uppercase mb-4 text-center">
+                Report Post
+              </h2>
+              <p className="text-sm text-gray-600 mb-6 text-center">
+                Select a reason for reporting this post:
+              </p>
+              
+              <div className="space-y-3 mb-6">
+                <button
+                  onClick={() => submitReport('SPAM')}
+                  className="w-full text-left px-4 py-3 border-3 border-black bg-yellow-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                >
+                  Spam or misleading content
+                </button>
+                
+                <button
+                  onClick={() => submitReport('ABUSE')}
+                  className="w-full text-left px-4 py-3 border-3 border-black bg-red-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                >
+                  Abusive or harmful language
+                </button>
+                
+                <button
+                  onClick={() => submitReport('HATE')}
+                  className="w-full text-left px-4 py-3 border-3 border-black bg-orange-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                >
+                  Hate speech or discrimination
+                </button>
+                
+                <button
+                  onClick={() => submitReport('OTHER')}
+                  className="w-full text-left px-4 py-3 border-3 border-black bg-purple-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                >
+                  Other violations
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportPostId(null);
+                }}
+                className="w-full px-4 py-3 border-3 border-black bg-gray-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {showCreateForm && (
           <div
             className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 backdrop-blur-sm px-4 py-10"
