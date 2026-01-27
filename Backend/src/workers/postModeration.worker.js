@@ -42,6 +42,9 @@ const postModerationWorker = new Worker(
             }
 
             // --- LAYER 2: PERSPECTIVE ---
+
+            const perspectiveResponse = await perspectiveClient(post.content);
+
             const ATTRIBUTES_TO_BLOCK = [
                 "PROFANITY",
                 "SEXUALLY_EXPLICIT",
