@@ -56,7 +56,7 @@ const postModerationWorker = new Worker(
                 "IDENTITY_ATTACK",
             ];
 
-            const BLOCK_THRESHOLD = 0.15; // zero tolerance
+            const BLOCK_THRESHOLD = 0.65; // zero tolerance
 
             let triggeredAttribute = null;
             let maxScore = 0;
