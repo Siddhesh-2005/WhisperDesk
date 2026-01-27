@@ -12,18 +12,18 @@ const ALL_ATTRIBUTES = {
   SEXUALLY_EXPLICIT: {},
   IDENTITY_ATTACK: {},
   HARASSMENT: {},
-  HARASSMENT_THREAT: {}
+  HARASSMENT_THREAT: {},
 };
 
 export async function perspectiveClient(text) {
   if (!text || !text.trim()) {
     return {
       attributeScores: Object.fromEntries(
-        Object.keys(ALL_ATTRIBUTES).map(attr => [
+        Object.keys(ALL_ATTRIBUTES).map((attr) => [
           attr,
-          { summaryScore: { value: 0 } }
+          { summaryScore: { value: 0 } },
         ])
-      )
+      ),
     };
   }
 
@@ -34,7 +34,7 @@ export async function perspectiveClient(text) {
         comment: { text: text.trim() },
         languages: ["en", "hi"],
         requestedAttributes: ALL_ATTRIBUTES,
-        doNotStore: true
+        doNotStore: true,
       },
       { timeout: 5000 }
     );
@@ -46,15 +46,15 @@ export async function perspectiveClient(text) {
       err.response?.data?.error?.message || err.message
     );
 
-    // Conservative fallback: assume medium risk on all attributes
+    // IMPORTANT: fallback is NOT treated as guilt
     return {
       attributeScores: Object.fromEntries(
-        Object.keys(ALL_ATTRIBUTES).map(attr => [
+        Object.keys(ALL_ATTRIBUTES).map((attr) => [
           attr,
-          { summaryScore: { value: 0.5 } }
+          { summaryScore: { value: 0 } },
         ])
       ),
-      isFallback: true
+      isFallback: true,
     };
   }
 }
