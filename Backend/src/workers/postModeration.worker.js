@@ -22,11 +22,8 @@ const postModerationWorker = new Worker(
     async (job) => {
         const { postId, imagePath } = job.data;
 
-
         const post = await Post.findById(postId);
         if (!post) {
-
-
             return;
         }
 
@@ -36,8 +33,6 @@ const postModerationWorker = new Worker(
                 isLocalBlacklisted(post.content) ||
                 isLocalBlacklisted(post.title)
             ) {
-
-
                 return await finalizePost(
                     post,
                     "REJECTED",
@@ -47,28 +42,48 @@ const postModerationWorker = new Worker(
             }
 
             // --- LAYER 2: PERSPECTIVE ---
-            const textToTest = `${post.title} ${post.content}`;
-            const perspectiveResponse = await perspectiveClient(textToTest);
-            const toxicity =
-                perspectiveResponse.attributeScores.TOXICITY.summaryScore.value;
-            const insult =
-                perspectiveResponse.attributeScores.INSULT.summaryScore.value;
-            const maxScore = Math.max(toxicity, insult);
+            const ATTRIBUTES_TO_BLOCK = [
+                "PROFANITY",
+                "SEXUALLY_EXPLICIT",
+                "SEVERE_TOXICITY",
+                "THREAT",
+                "HARASSMENT",
+                "HARASSMENT_THREAT",
+                "INSULT",
+                "IDENTITY_ATTACK",
+            ];
 
+            const BLOCK_THRESHOLD = 0.15; // zero tolerance
 
-            if (maxScore > 0.9) {
+            let triggeredAttribute = null;
+            let maxScore = 0;
+
+            for (const attr of ATTRIBUTES_TO_BLOCK) {
+                const score =
+                    perspectiveResponse.attributeScores?.[attr]?.summaryScore
+                        ?.value || 0;
+
+                if (score > maxScore) maxScore = score;
+
+                if (score >= BLOCK_THRESHOLD) {
+                    triggeredAttribute = attr;
+                    break;
+                }
+            }
+
+            if (triggeredAttribute) {
                 return await finalizePost(
                     post,
                     "REJECTED",
                     "PERSPECTIVE",
-                    "Abusive content."
+                    `Blocked due to ${triggeredAttribute.toLowerCase()}`
                 );
             }
 
-            // --- LAYER 3: GEMINI (The "Intelligence" Layer) ---
+            // --- LAYER 3: GROQ (Context + Intent Moderation) ---
 
             console.log(
-                `🤖 Calling Gemini for ${maxScore > 0.4 ? "Safety + Meta" : "Meta only"}`
+                `🤖 Calling Groq for ${maxScore > 0.4 ? "Safety + Meta" : "Meta only"}`
             );
 
             const groqResult = await groqCLient(post.content, post.category);
@@ -99,7 +114,6 @@ const postModerationWorker = new Worker(
                 image: imageData,
                 scores: { toxicity: maxScore },
             });
-
         } catch (error) {
             console.error(" Worker Error:", error.message);
             throw error;
@@ -127,10 +141,10 @@ async function finalizePost(post, status, path, reason, extras = {}) {
     if (status === "PUBLISHED") post.publishedAt = new Date();
 
     await redisUpstash.set(
-            `post:likes:init:${post._id}`,
-            "1",
-            { NX: true } // idempotent, safe on retries
-        );
+        `post:likes:init:${post._id}`,
+        "1",
+        { NX: true } // idempotent, safe on retries
+    );
 
     await post.save();
 
