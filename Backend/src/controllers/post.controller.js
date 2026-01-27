@@ -101,7 +101,7 @@ const getPosts = asyncHandler(async (req, res) => {
     }
 
     const posts = await Post.find(filter)
-        .populate("authorId", "username")
+        .populate("authorId", "username branch")
         .sort({ publishedAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -134,7 +134,7 @@ const getPost = asyncHandler(async (req, res) => {
         _id: postId,
         status: "PUBLISHED",
         isDeleted: false
-    }).populate("authorId", "username").lean();
+    }).populate("authorId", "username branch").lean();
 
     if (!post) {
         throw new ApiError(404, "Post not found");

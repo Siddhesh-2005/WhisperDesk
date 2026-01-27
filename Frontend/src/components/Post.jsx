@@ -34,6 +34,8 @@ function Post({
 
   const displayUsername =
     post?.authorId?.username || post?.author?.username || 'Anonymous';
+  const displayBranch =
+    post?.authorId?.branch || post?.author?.branch || '';
 
   const handleCommentClick = () => {
     if (!isCommentsOpen && onOpenComments) {
@@ -48,6 +50,9 @@ function Post({
       <div className="flex justify-between items-start mb-4 pb-4 border-b-3 border-black">
         <div>
           <p className="font-black uppercase text-sm text-gray-700">{displayUsername}</p>
+          {displayBranch && (
+            <p className="text-xs text-purple-600 uppercase font-bold">{displayBranch}</p>
+          )}
           {post.category && (
             <p className="text-xs text-gray-600 uppercase font-semibold">{post.category}</p>
           )}
