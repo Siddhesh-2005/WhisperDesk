@@ -7,6 +7,7 @@ import { useToast } from '../hooks/useToast.js';
 import postService from '../services/post.service';
 import likeService from '../services/like.service';
 import commentService from '../services/comment.service';
+import reportService from '../services/report.service';
 
 function HomePage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -186,13 +187,42 @@ function HomePage() {
   };
 
   const handleReport = async (postId) => {
-    const reason = prompt('Why are you reporting this post?');
-    if (!reason) return;
+    // Create a custom dialog with enum options
+    const reportReasons = [
+      { value: 'SPAM', label: 'Spam or misleading content' },
+      { value: 'ABUSE', label: 'Abusive or harmful language' },
+      { value: 'HATE', label: 'Hate speech or discrimination' },
+      { value: 'OTHER', label: 'Other violations' }
+    ];
+
+    // Create a simple selection dialog
+    let reasonMessage = 'Select a reason for reporting this post:\n\n';
+    reportReasons.forEach((reason, index) => {
+      reasonMessage += `${index + 1}. ${reason.label}\n`;
+    });
+    reasonMessage += '\nEnter the number (1-4):';
+
+    const choice = prompt(reasonMessage);
+    if (!choice) return;
+
+    const choiceNum = parseInt(choice);
+    if (isNaN(choiceNum) || choiceNum < 1 || choiceNum > 4) {
+      showToast('Invalid selection. Please try again.', 'error');
+      return;
+    }
+
+    const selectedReason = reportReasons[choiceNum - 1].value;
 
     try {
+      await reportService.createReport({
+        targetType: 'POST',
+        targetId: postId,
+        reason: selectedReason
+      });
       showToast('Post reported. Thank you for helping keep the community safe.', 'success');
     } catch (error) {
-      showToast('Failed to report post', 'error');
+      const errorMessage = error.response?.data?.message || 'Failed to report post';
+      showToast(errorMessage, 'error');
     }
   };
 
