@@ -74,7 +74,8 @@ const postModerationWorker = new Worker(
       }
 
       /* ---------------- LAYER 3: GROQ ---------------- */
-      const groqResult = await groqCLient(post.content, post.category);
+      const fullText = `Title: ${post.title}\nContent: ${post.content}`;
+      const groqResult = await groqCLient(fullText, post.category);
 
       if (groqResult.decision === "REJECTED") {
         return await finalizePost(
