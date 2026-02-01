@@ -3,17 +3,30 @@ import { RateLimiterRedis } from "rate-limiter-flexible";
 import redisClient from "../db/redis.upstash.js";
 import { ApiError } from "../utils/ApiError.js";
 
-const authRateLimiterClient = new RateLimiterRedis({
-    storeClient: redisClient,
-    keyPrefix: "auth_limit",
-    points: 100,       // 100 requests 
-    duration: 60 * 60, // Per 1 hour
-    blockDuration: 0 
-});
+let authRateLimiterClient = null;
+
+const getOrCreateRateLimiter = () => {
+    if (!authRateLimiterClient && redisClient.isOpen) {
+        authRateLimiterClient = new RateLimiterRedis({
+            storeClient: redisClient,
+            keyPrefix: "auth_limit",
+            points: 100,       // 100 requests 
+            duration: 60 * 60, // Per 1 hour
+            blockDuration: 0 
+        });
+    }
+    return authRateLimiterClient;
+};
 
 export const authRateLimiter = async (req, res, next) => {
     if (!redisClient.isOpen) {
         console.warn("Rate limiter skipped: Redis not connected");
+        return next();
+    }
+
+    const rateLimiter = getOrCreateRateLimiter();
+    if (!rateLimiter) {
+        console.warn("Rate limiter skipped: Could not initialize");
         return next();
     }
 
@@ -26,7 +39,7 @@ export const authRateLimiter = async (req, res, next) => {
     const key = crypto.createHash("sha256").update(fingerprint).digest("hex");
 
     try {
-        await authRateLimiterClient.consume(key);
+        await rateLimiter.consume(key);
         next();
     } catch (error) {
         if (error.msBeforeNext) {
