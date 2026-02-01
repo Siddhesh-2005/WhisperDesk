@@ -1,7 +1,6 @@
 
 const HINGLISH_SLURS = [
     // Direct Slurs
-    
     /ch[uùú]t[iíy][ay@]/i,
     /bh[e3]nch[o0]d/i,
     /m[a@]d[a@]rch[o0]d/i,
@@ -9,16 +8,23 @@ const HINGLISH_SLURS = [
     /l[au]nd[a@]/i,
     /r[a@]nd[iíy]/i,
     /bh[o0]sd[iíy]k[e3]/i,
-    
-    
+
+    // Newly added words
+    /\bch[ií]n[a@][a@]r\b/i,     
+    /\bch[ií]n[a@][a@]l\b/i,     
+    /\bb[uú]ll[a@]\b/i,          
+    /\bl[uú]ll[ií]\b/i,          
+    /\bjh[a@]t\b/i,              
+
     // Abbreviations
     /\bmc\b/i,
     /\bbc\b/i,
-    
-    // Phrases/Combinations
+
+    // Phrases / Combinations
     /m[aa] k[ii] ch[uu]t/i,
     /g[aa]nd m[aa]r/i
 ];
+
 
 /**
  * Checks if the text contains any locally blacklisted Hinglish slurs.
