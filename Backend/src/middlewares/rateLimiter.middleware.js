@@ -8,7 +8,6 @@ const authRateLimiterClient = new RateLimiterRedis({
     keyPrefix: "auth_limit",
     points: 100,       // 100 requests 
     duration: 60 * 60, // Per 1 hour
-    insuranceLimiter: null,
     blockDuration: 0 
 });
 
