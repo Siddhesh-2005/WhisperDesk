@@ -1,14 +1,14 @@
 import crypto from "crypto";
 import { RateLimiterRedis } from "rate-limiter-flexible";
-import redisClient from "../db/redis.upstash.js";
+import ioredisClient from "../db/redis.ioredis.js";
 import { ApiError } from "../utils/ApiError.js";
 
 let authRateLimiterClient = null;
 
 const getOrCreateRateLimiter = () => {
-    if (!authRateLimiterClient && redisClient.isOpen) {
+    if (!authRateLimiterClient && ioredisClient.status === "ready") {
         authRateLimiterClient = new RateLimiterRedis({
-            storeClient: redisClient,
+            storeClient: ioredisClient,
             keyPrefix: "auth_limit",
             points: 100,       // 100 requests 
             duration: 60 * 60, // Per 1 hour
@@ -19,8 +19,8 @@ const getOrCreateRateLimiter = () => {
 };
 
 export const authRateLimiter = async (req, res, next) => {
-    if (!redisClient.isOpen) {
-        console.warn("Rate limiter skipped: Redis not connected");
+    if (ioredisClient.status !== "ready") {
+        console.warn("Rate limiter skipped: IORedis not connected");
         return next();
     }
 
