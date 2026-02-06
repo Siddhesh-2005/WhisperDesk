@@ -19,7 +19,7 @@ const getOrCreatePostLimiter = () => {
             keyPrefix: "post_limit",
             points: POST_LIMIT_CONFIG.points,
             duration: POST_LIMIT_CONFIG.duration,
-            blockDuration: 0 
+            blockDuration: POST_LIMIT_CONFIG.penaltyDuration
         });
     }
     return postRateLimiterClient;
@@ -37,17 +37,15 @@ export const postRateLimiter = async (req, res, next) => {
         return next();
     }
 
+    const forwardedFor = req.headers["x-forwarded-for"];
+    const ip = Array.isArray(forwardedFor)
+        ? forwardedFor[0]
+        : forwardedFor?.split(",")[0]?.trim() || req.ip;
 
-    const fingerprint = [
-        req.ip,
-        req.headers["user-agent"] || "unknown",
-        req.user?._id || "guest"
-    ].join("|");
+    const userId = req.user?._id?.toString();
+    const fingerprint = userId || ip || "guest";
 
-    const key = crypto
-        .createHash("sha256")
-        .update(fingerprint)
-        .digest("hex");
+    const key = crypto.createHash("sha256").update(fingerprint).digest("hex");
 
     try {
         await limiter.consume(key, 1);
