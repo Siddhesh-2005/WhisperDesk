@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { initiateLogin, oauthCallback, getUser, logout } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { authRateLimiter } from "../middlewares/rateLimiter.middleware.js";
+import { authRateLimiter } from "../middlewares/auth.rateLimiter.middleware.js";
 
 const userRouter = Router();
 
