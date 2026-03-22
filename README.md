@@ -91,34 +91,9 @@ Posts go through a multi-stage automated moderation pipeline before being publis
 
 ## 4. System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Background Workers                        │
-│          ┌─────────────────────┐  ┌──────────────────────────┐  │
-│          │  Post Moderation    │  │  Like Reconciliation     │  │
-│          │  Worker             │  │  Worker                  │  │
-│          └─────────────────────┘  └──────────────────────────┘  │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │ consumes jobs
-                   ┌──────────▼──────────┐
-                   │   BullMQ Queue      │◄────── Redis Cloud
-                   │   (Messaging Queue) │        (queue store)
-                   └──────────┬──────────┘
-                              │ enqueues
-          ┌───────────────────▼────────────────────┐
-          │              Express Server             │
-          │   (controllers, middlewares, routes)    │
-          └───┬───────────────────────────────┬─────┘
-              │                               │
-   ┌──────────▼──────────┐       ┌────────────▼────────────┐
-   │   Redis Upstash     │       │       MongoDB            │
-   │   (likes + rate     │       │   (posts, users,         │
-   │    limiting)        │       │    comments, reports)    │
-   └─────────────────────┘       └─────────────────────────┘
 
-User ──► Rate Limiter (Redis) ──► Server ──► Response
-         (OAuth2 via Azure AD)
-```
+<img width="1111" height="718" alt="image" src="https://github.com/user-attachments/assets/584e0282-619c-4737-956d-bb5025f4969f" />
+
 
 **Key design decisions:**
 
@@ -132,6 +107,9 @@ User ──► Rate Limiter (Redis) ──► Server ──► Response
 
 ### Entity-Relationship Overview
 
+<img width="3682" height="3122" alt="image" src="https://github.com/user-attachments/assets/87e0fe92-d6f8-499a-81e5-ff505d7281e6" />
+
+---
 ```
 users ──< posts         (one user can author many posts)
 posts ──< comments      (one post can have many comments)
