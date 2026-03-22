@@ -12,22 +12,36 @@ WhisperDesk is a full-stack anonymous blogging platform built exclusively for co
 
 ## Table of Contents
 
-1. [Problem Statement](#1-problem-statement)
-2. [Features](#2-features)
-3. [Tech Stack](#3-tech-stack)
-4. [System Architecture](#4-system-architecture)
-5. [Database Schema](#5-database-schema)
-6. [Project Structure](#6-project-structure)
-7. [Anonymity Design](#7-anonymity-design)
-8. [Moderation Pipeline](#8-moderation-pipeline)
-9. [Getting Started](#9-getting-started)
-10. [Environment Variables](#10-environment-variables)
-11. [API Overview](#11-api-overview)
-12. [Deployment](#12-deployment)
+1. [Screenshots](#1-screenshots)
+2. [Problem Statement](#2-problem-statement)
+3. [Features](#3-features)
+4. [Tech Stack](#4-tech-stack)
+5. [System Architecture](#5-system-architecture)
+6. [Database Schema](#6-database-schema)
+7. [Project Structure](#7-project-structure)
+8. [Anonymity Design](#8-anonymity-design)
+9. [Moderation Pipeline](#9-moderation-pipeline)
+10. [Getting Started](#10-getting-started)
+11. [Environment Variables](#11-environment-variables)
+12. [API Overview](#12-api-overview)
+13. [Deployment](#13-deployment)
 
 ---
 
-## 1. Problem Statement
+## 1. Screenshots
+
+| Landing Page | Home Feed |
+|---|---|
+| ![Landing Page](./docs/screenshots/landing-page.png) | ![Home Feed](./docs/screenshots/home-feed.png) |
+
+| Create Post | Post Detail |
+|---|---|
+| ![Create Post](./docs/screenshots/create-post.png) | ![Post Detail](./docs/screenshots/post-detail.png) |
+
+
+---
+
+## 2. Problem Statement
 
 Many students hesitate to express opinions or share experiences online because of:
 
@@ -39,7 +53,7 @@ WhisperDesk solves this by **decoupling identity from content** — students are
 
 ---
 
-## 2. Features
+## 3. Features
 
 ### Authentication
 - **Microsoft Azure AD OAuth2** — sign in with your institutional college email only
@@ -70,7 +84,7 @@ Posts go through a multi-stage automated moderation pipeline before being publis
 
 ---
 
-## 3. Tech Stack
+## 4. Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -89,7 +103,7 @@ Posts go through a multi-stage automated moderation pipeline before being publis
 
 ---
 
-## 4. System Architecture
+## 5. System Architecture
 
 
 <img width="1111" height="718" alt="image" src="https://github.com/user-attachments/assets/584e0282-619c-4737-956d-bb5025f4969f" />
@@ -103,7 +117,7 @@ Posts go through a multi-stage automated moderation pipeline before being publis
 
 ---
 
-## 5. Database Schema
+## 6. Database Schema
 
 ### Entity-Relationship Overview
 
@@ -187,7 +201,7 @@ comments ──< reports
 
 ---
 
-## 6. Project Structure
+## 7. Project Structure
 
 ```
 whisperdesk/
@@ -302,6 +316,12 @@ whisperdesk/
 │   ├── vercel.json
 │   └── package.json
 │
+├── docs/
+│   └── screenshots/                 # App screenshots for README
+│       ├── landing-page.png
+│       ├── home-feed.png
+│       ├── create-post.png
+│       └── post-detail.png
 ├── .gitignore
 ├── AZURE_OAUTH_SETUP.md
 ├── MIGRATION_SUMMARY.md
@@ -312,7 +332,7 @@ whisperdesk/
 
 ---
 
-## 7. Anonymity Design
+## 8. Anonymity Design
 
 WhisperDesk is built around a strict anonymity model:
 
@@ -324,7 +344,7 @@ WhisperDesk is built around a strict anonymity model:
 
 ---
 
-## 8. Moderation Pipeline
+## 9. Moderation Pipeline
 
 Every post submission is processed asynchronously through a layered moderation system:
 
@@ -353,7 +373,7 @@ The `moderation_path`, `moderation_reason`, `moderation_scores`, and `moderation
 
 ---
 
-## 9. Getting Started
+## 10. Getting Started
 
 ### Prerequisites
 
@@ -416,7 +436,7 @@ npm run preview   # preview production build locally
 
 ---
 
-## 10. Environment Variables
+## 11. Environment Variables
 
 ### Backend `.env`
 
@@ -474,7 +494,7 @@ VITE_API_URL=http://localhost:8000/api/v1
 
 ---
 
-## 11. API Overview
+## 12. API Overview
 
 All routes are prefixed with `/api/v1`.
 
@@ -530,7 +550,7 @@ All routes are prefixed with `/api/v1`.
 
 ---
 
-## 12. Deployment
+## 13. Deployment
 
 ### Frontend — Vercel
 
