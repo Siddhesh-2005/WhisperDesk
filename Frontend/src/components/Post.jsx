@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CommentsDropdown from './CommentsDropdown';
 
 const formatTimeAgo = (date) => {
@@ -26,11 +26,14 @@ function Post({
   allComments = [],
   onAddComment,
   onReport,
+  onCopyLink,
   isLoadingLike,
   onOpenComments,
   isLoadingComments,
+  isHighlighted = false,
 }) {
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
 
   const displayUsername =
     post?.authorId?.username || post?.author?.username || 'Anonymous';
@@ -44,8 +47,33 @@ function Post({
     setIsCommentsOpen(!isCommentsOpen);
   };
 
+  const handleCopyLinkClick = async () => {
+    const copied = await onCopyLink?.(post._id);
+
+    if (copied) {
+      setIsLinkCopied(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!isLinkCopied) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      setIsLinkCopied(false);
+    }, 1500);
+
+    return () => window.clearTimeout(timer);
+  }, [isLinkCopied]);
+
   return (
-    <div className="border-4 border-black bg-white rounded-lg shadow-[8px_8px_0_black] p-6 mb-6">
+    <div
+      id={`post-${post._id}`}
+      className={`border-4 border-black bg-white rounded-lg shadow-[8px_8px_0_black] p-6 mb-6 transition-all ${
+        isHighlighted ? 'ring-4 ring-blue-400 ring-offset-4 ring-offset-[#f4f4f4]' : ''
+      }`}
+    >
       {/* Header */}
       <div className="flex justify-between items-start mb-4 pb-4 border-b-3 border-black">
         <div>
@@ -138,14 +166,26 @@ function Post({
         </div>
 
         <button
+          onClick={handleCopyLinkClick}
+          className="flex items-center gap-2 px-4 py-2 border-3 border-black font-bold text-sm uppercase rounded-lg bg-emerald-300 shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] transition-all"
+          title="Copy post link"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 1 0-7.07l1.41-1.41a5 5 0 0 1 7.07 7.07L17 13" />
+            <path d="M14 11a5 5 0 0 1 0 7.07l-1.41 1.41a5 5 0 0 1-7.07-7.07L7 11" />
+          </svg>
+          <span>{isLinkCopied ? 'Copied!' : 'Copy link'}</span>
+        </button>
+
+        <button
           onClick={() => onReport(post._id)}
           className="flex items-center gap-2 px-4 py-2 border-3 border-black font-bold text-sm uppercase rounded-lg bg-yellow-300 shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] transition-all"
+          title="Report post"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
             <line x1="4" y1="22" x2="4" y2="15"></line>
           </svg>
-          
         </button>
       </div>
     </div>
