@@ -25,10 +25,13 @@ function HomePage() {
   const [fetchError, setFetchError] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportPostId, setReportPostId] = useState(null);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [highlightedPostId, setHighlightedPostId] = useState(null);
   const { toasts, showToast, removeToast } = useToast();
 
   useEffect(() => {
     let isMounted = true;
+    const targetPostId = new URLSearchParams(window.location.search).get('postId');
 
     const fetchData = async () => {
       try {
@@ -36,14 +39,39 @@ function HomePage() {
         setFetchError(null);
         
         const [postsResponse, likesResponse] = await Promise.all([
-          postService.getPosts({ page: 1, limit: 10 }),
+          postService.getPosts({ page: 1, limit: 5 }), // Optimized limit to 5 for faster initial load
           likeService.getUserLikes({ page: 1, limit: 100 }).catch(() => ({ data: { likes: [] } }))
         ]);
         
         if (!isMounted) return;
         
-        const postsData = postsResponse.data?.posts || [];
+        let postsData = postsResponse.data?.posts || [];
         const likedPostsData = likesResponse.data?.likes || [];
+
+        if (targetPostId) {
+          const existingTargetPost = postsData.find((post) => post._id === targetPostId);
+
+          if (existingTargetPost) {
+            postsData = [
+              existingTargetPost,
+              ...postsData.filter((post) => post._id !== targetPostId),
+            ];
+          } else {
+            try {
+              const targetPostResponse = await postService.getPost(targetPostId);
+              const targetPost = targetPostResponse.data;
+
+              if (targetPost?._id) {
+                postsData = [
+                  targetPost,
+                  ...postsData.filter((post) => post._id !== targetPost._id),
+                ];
+              }
+            } catch (error) {
+              // Ignore missing or unpublished posts; the copied link still opens the feed.
+            }
+          }
+        }
         
         const likedPostIds = new Set(likedPostsData.map(post => post._id));
         setLikedPosts(likedPostIds);
@@ -80,6 +108,29 @@ function HomePage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const targetPostId = new URLSearchParams(window.location.search).get('postId');
+
+    if (!targetPostId || posts.length === 0) {
+      return;
+    }
+
+    const targetElement = document.getElementById(`post-${targetPostId}`);
+
+    if (!targetElement) {
+      return;
+    }
+
+    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedPostId(targetPostId);
+
+    const timer = window.setTimeout(() => {
+      setHighlightedPostId(null);
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [posts]);
 
   const handleCreatePost = async (formData) => {
     try {
@@ -193,8 +244,35 @@ function HomePage() {
     setShowReportModal(true);
   };
 
+  const handleCopyPostLink = async (postId) => {
+    const postLink = `${window.location.origin}/home?postId=${postId}`;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(postLink);
+      } else {
+        const tempInput = document.createElement('textarea');
+        tempInput.value = postLink;
+        tempInput.setAttribute('readonly', 'true');
+        tempInput.style.position = 'fixed';
+        tempInput.style.left = '-9999px';
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+      }
+
+      showToast('Post link copied to clipboard.', 'success');
+      return true;
+    } catch (error) {
+      showToast('Failed to copy post link.', 'error');
+      return false;
+    }
+  };
+
   const submitReport = async (reason) => {
     try {
+      setIsSubmittingReport(true);
       await reportService.createReport({
         targetType: 'POST',
         targetId: reportPostId,
@@ -206,6 +284,8 @@ function HomePage() {
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to report post';
       showToast(errorMessage, 'error');
+    } finally {
+      setIsSubmittingReport(false);
     }
   };
 
@@ -215,7 +295,7 @@ function HomePage() {
     try {
       setIsLoadingPosts(true);
       const nextPage = currentPage + 1;
-      const response = await postService.getPosts({ page: nextPage, limit: 10 });
+      const response = await postService.getPosts({ page: nextPage, limit: 5 }); // Keep consistent with initial load limit
       
       const newPosts = response.data?.posts || [];
       setPosts(prev => [...prev, ...newPosts]);
@@ -248,6 +328,7 @@ function HomePage() {
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
             onClick={() => {
+              if (isSubmittingReport) return;
               setShowReportModal(false);
               setReportPostId(null);
             }}
@@ -266,39 +347,45 @@ function HomePage() {
               <div className="space-y-3 mb-6">
                 <button
                   onClick={() => submitReport('SPAM')}
-                  className="w-full text-left px-4 py-3 border-3 border-black bg-yellow-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                  disabled={isSubmittingReport}
+                  className="w-full text-left px-4 py-3 border-3 border-black bg-yellow-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                 >
-                  Spam or misleading content
+                  {isSubmittingReport ? 'Submitting...' : 'Spam or misleading content'}
                 </button>
                 
                 <button
                   onClick={() => submitReport('ABUSE')}
-                  className="w-full text-left px-4 py-3 border-3 border-black bg-red-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                  disabled={isSubmittingReport}
+                  className="w-full text-left px-4 py-3 border-3 border-black bg-red-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                 >
-                  Abusive or harmful language
+                  {isSubmittingReport ? 'Submitting...' : 'Abusive or harmful language'}
                 </button>
                 
                 <button
                   onClick={() => submitReport('HATE')}
-                  className="w-full text-left px-4 py-3 border-3 border-black bg-orange-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                  disabled={isSubmittingReport}
+                  className="w-full text-left px-4 py-3 border-3 border-black bg-orange-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                 >
-                  Hate speech or discrimination
+                  {isSubmittingReport ? 'Submitting...' : 'Hate speech or discrimination'}
                 </button>
                 
                 <button
                   onClick={() => submitReport('OTHER')}
-                  className="w-full text-left px-4 py-3 border-3 border-black bg-purple-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                  disabled={isSubmittingReport}
+                  className="w-full text-left px-4 py-3 border-3 border-black bg-purple-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                 >
-                  Other violations
+                  {isSubmittingReport ? 'Submitting...' : 'Other violations'}
                 </button>
               </div>
 
               <button
                 onClick={() => {
+                  if (isSubmittingReport) return;
                   setShowReportModal(false);
                   setReportPostId(null);
                 }}
-                className="w-full px-4 py-3 border-3 border-black bg-gray-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                disabled={isSubmittingReport}
+                className="w-full px-4 py-3 border-3 border-black bg-gray-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
               >
                 Cancel
               </button>
@@ -352,9 +439,11 @@ function HomePage() {
                 allComments={postComments[post._id] || []}
                 onAddComment={handleAddComment}
                 onReport={handleReport}
+                onCopyLink={handleCopyPostLink}
                 isLoadingLike={isLoadingLike[post._id]}
                 onOpenComments={handleOpenComments}
                 isLoadingComments={isLoadingComments[post._id]}
+                isHighlighted={highlightedPostId === post._id}
               />
             ))}
 
@@ -364,9 +453,9 @@ function HomePage() {
                 <button
                   onClick={handleLoadMore}
                   disabled={isLoadingPosts}
-                  className="px-8 py-3 border-4 border-black bg-blue-300 font-black uppercase rounded-lg shadow-[6px_6px_0_black] hover:shadow-[4px_4px_0_black] disabled:opacity-50 transition-all"
+                  className="px-8 py-3 border-4 border-black bg-blue-300 font-black uppercase rounded-lg shadow-[6px_6px_0_black] hover:shadow-[4px_4px_0_black] disabled:opacity-50 transition-all cursor-pointer"
                 >
-                  {isLoadingPosts ? 'Loading more...' : 'Load More Posts'}
+                  {isLoadingPosts ? 'Loading...' : 'Reveal More Whispers'}
                 </button>
               </div>
             )}
