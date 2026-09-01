@@ -25,6 +25,7 @@ function HomePage() {
   const [fetchError, setFetchError] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportPostId, setReportPostId] = useState(null);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [highlightedPostId, setHighlightedPostId] = useState(null);
   const { toasts, showToast, removeToast } = useToast();
 
@@ -271,6 +272,7 @@ function HomePage() {
 
   const submitReport = async (reason) => {
     try {
+      setIsSubmittingReport(true);
       await reportService.createReport({
         targetType: 'POST',
         targetId: reportPostId,
@@ -282,6 +284,8 @@ function HomePage() {
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to report post';
       showToast(errorMessage, 'error');
+    } finally {
+      setIsSubmittingReport(false);
     }
   };
 
@@ -324,6 +328,7 @@ function HomePage() {
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
             onClick={() => {
+              if (isSubmittingReport) return;
               setShowReportModal(false);
               setReportPostId(null);
             }}
@@ -342,38 +347,44 @@ function HomePage() {
               <div className="space-y-3 mb-6">
                 <button
                   onClick={() => submitReport('SPAM')}
+                  disabled={isSubmittingReport}
                   className="w-full text-left px-4 py-3 border-3 border-black bg-yellow-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                 >
-                  Spam or misleading content
+                  {isSubmittingReport ? 'Submitting...' : 'Spam or misleading content'}
                 </button>
                 
                 <button
                   onClick={() => submitReport('ABUSE')}
+                  disabled={isSubmittingReport}
                   className="w-full text-left px-4 py-3 border-3 border-black bg-red-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                 >
-                  Abusive or harmful language
+                  {isSubmittingReport ? 'Submitting...' : 'Abusive or harmful language'}
                 </button>
                 
                 <button
                   onClick={() => submitReport('HATE')}
+                  disabled={isSubmittingReport}
                   className="w-full text-left px-4 py-3 border-3 border-black bg-orange-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                 >
-                  Hate speech or discrimination
+                  {isSubmittingReport ? 'Submitting...' : 'Hate speech or discrimination'}
                 </button>
                 
                 <button
                   onClick={() => submitReport('OTHER')}
+                  disabled={isSubmittingReport}
                   className="w-full text-left px-4 py-3 border-3 border-black bg-purple-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                 >
-                  Other violations
+                  {isSubmittingReport ? 'Submitting...' : 'Other violations'}
                 </button>
               </div>
 
               <button
                 onClick={() => {
+                  if (isSubmittingReport) return;
                   setShowReportModal(false);
                   setReportPostId(null);
                 }}
+                disabled={isSubmittingReport}
                 className="w-full px-4 py-3 border-3 border-black bg-gray-200 rounded-lg font-bold uppercase text-sm shadow-[4px_4px_0_black] hover:shadow-[2px_2px_0_black] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
               >
                 Cancel
