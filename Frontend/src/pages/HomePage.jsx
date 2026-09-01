@@ -36,7 +36,7 @@ function HomePage() {
         setFetchError(null);
         
         const [postsResponse, likesResponse] = await Promise.all([
-          postService.getPosts({ page: 1, limit: 10 }),
+          postService.getPosts({ page: 1, limit: 5 }), // Optimized limit to 5 for faster initial load
           likeService.getUserLikes({ page: 1, limit: 100 }).catch(() => ({ data: { likes: [] } }))
         ]);
         
@@ -215,7 +215,7 @@ function HomePage() {
     try {
       setIsLoadingPosts(true);
       const nextPage = currentPage + 1;
-      const response = await postService.getPosts({ page: nextPage, limit: 10 });
+      const response = await postService.getPosts({ page: nextPage, limit: 5 }); // Keep consistent with initial load limit
       
       const newPosts = response.data?.posts || [];
       setPosts(prev => [...prev, ...newPosts]);
@@ -364,9 +364,9 @@ function HomePage() {
                 <button
                   onClick={handleLoadMore}
                   disabled={isLoadingPosts}
-                  className="px-8 py-3 border-4 border-black bg-blue-300 font-black uppercase rounded-lg shadow-[6px_6px_0_black] hover:shadow-[4px_4px_0_black] disabled:opacity-50 transition-all"
+                  className="px-8 py-3 border-4 border-black bg-blue-300 font-black uppercase rounded-lg shadow-[6px_6px_0_black] hover:shadow-[4px_4px_0_black] disabled:opacity-50 transition-all cursor-pointer"
                 >
-                  {isLoadingPosts ? 'Loading more...' : 'Load More Posts'}
+                  {isLoadingPosts ? 'Loading...' : 'Reveal More Whispers'}
                 </button>
               </div>
             )}
