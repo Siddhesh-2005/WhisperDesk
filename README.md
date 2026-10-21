@@ -388,7 +388,7 @@ The `moderation_path`, `moderation_reason`, `moderation_scores`, and `moderation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/whisperdesk.git
+git clone https://github.com/Siddhesh-2005/whisperdesk.git
 cd whisperdesk
 
 # Install backend dependencies
