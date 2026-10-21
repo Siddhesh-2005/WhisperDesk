@@ -83,6 +83,12 @@ npm run dev
 - Ensure backend is running on port 8000
 - Check browser console for CORS errors
 
+### Frontend or Backend Not Starting
+
+- **Backend fails to start:** Check the terminal for error messages and verify that the required dependencies and environment variables are configured.
+- **Frontend fails to start:** Ensure frontend dependencies are installed and review the terminal output for missing packages or configuration errors.
+- **Port already in use:** Check whether another process is using the required port and stop it if appropriate.
+- **API requests fail:** Confirm that the backend is running and that the frontend is configured to use the correct backend URL.
 ## Need More Help?
 
 See detailed documentation:
@@ -96,3 +102,5 @@ When deploying to production:
 2. Update environment variables with production URLs
 3. Set `NODE_ENV=production`
 4. Use HTTPS for both frontend and backend
+
+
